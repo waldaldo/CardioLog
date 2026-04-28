@@ -1,5 +1,3 @@
-// src/lib/recommendations.ts — OMS lifestyle recommendations
-
 export interface Recommendation {
   id: string;
   icon: string;

@@ -1,5 +1,3 @@
-// src/hooks/useReadings.ts
-
 import { useEffect, useState, useCallback } from 'react';
 import { listReadings, addReading as dbAdd, Reading } from '../db/repositories';
 
@@ -7,6 +5,8 @@ export function useReadings() {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // useCallback mantiene la misma referencia de `refresh` entre renders,
+  // lo que permite usarla en useFocusEffect sin causar bucles infinitos.
   const refresh = useCallback(async () => {
     setLoading(true);
     try {

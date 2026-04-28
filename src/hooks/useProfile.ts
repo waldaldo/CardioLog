@@ -1,5 +1,3 @@
-// src/hooks/useProfile.ts
-
 import { useEffect, useState, useCallback } from 'react';
 import { getProfile, saveProfile, Profile } from '../db/repositories';
 

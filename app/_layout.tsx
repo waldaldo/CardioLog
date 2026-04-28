@@ -1,5 +1,3 @@
-// app/_layout.tsx — Root layout with SQLite init + onboarding gate
-
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
@@ -19,7 +17,7 @@ export default function RootLayout() {
   const [hasProfile, setHasProfile] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fase 1: inicializar BD y leer perfil
+  // Fase 1: inicializa la BD y determina si el usuario ya completó el onboarding.
   useEffect(() => {
     (async () => {
       try {
@@ -36,7 +34,9 @@ export default function RootLayout() {
     })();
   }, []);
 
-  // Fase 2: navegar solo después de que el Stack esté montado
+  // Fase 2: navega a onboarding SOLO después de que el Stack esté montado.
+  // Si se hace la redirección dentro de la Fase 1 (antes del primer render),
+  // Expo Router no tiene el árbol de navegación listo y lanza un error.
   useEffect(() => {
     if (ready && !hasProfile) {
       router.replace('/onboarding');
@@ -66,15 +66,17 @@ export default function RootLayout() {
       <Stack screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: palette.bgDark, paddingTop: insets.top },
-        animation: 'fade_from_bottom',
+        sceneContainerStyle: { backgroundColor: palette.bgDark },
+        animation: 'none',
       }}>
-        <Stack.Screen name="(tabs)" options={{ animation: 'none' }}/>
+        <Stack.Screen name="(tabs)"/>
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }}/>
-        <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+        <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'none' }}/>
         <Stack.Screen name="recommendations"/>
         <Stack.Screen name="reminders"/>
         <Stack.Screen name="backup"/>
         <Stack.Screen name="settings"/>
+        <Stack.Screen name="readings-detail"/>
       </Stack>
     </View>
   );

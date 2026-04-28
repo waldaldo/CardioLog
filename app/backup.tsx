@@ -1,9 +1,8 @@
-// app/backup.tsx — Google Drive backup UI
-
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { signIn, signOut, connectedEmail, backupNow, listDriveBackups } from '@/lib/drive';
+import { ScreenSlide } from '@/components/ScreenSlide';
 import { palette } from '@/theme/tokens';
 
 export default function Backup() {
@@ -44,6 +43,7 @@ export default function Backup() {
   };
 
   return (
+    <ScreenSlide>
     <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
@@ -125,5 +125,6 @@ export default function Backup() {
         </>
       )}
     </ScrollView>
+    </ScreenSlide>
   );
 }

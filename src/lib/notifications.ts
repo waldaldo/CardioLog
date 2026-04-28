@@ -1,12 +1,10 @@
-// src/lib/notifications.ts — Expo local notifications for reminders
 import { upsertReminder, listReminders, getReminderById } from '../db/repositories';
-
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 let Notifications: any = null;
 
-// Only require expo-notifications if we are NOT running in Expo Go
-// Since SDK 53, requiring it in Expo Go on Android throws a fatal error.
+// expo-notifications no está disponible en Expo Go desde SDK 53.
+// Se importa dinámicamente solo cuando la app corre como build instalada.
 if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient && Constants.appOwnership !== 'expo') {
   try {
     const mod = require('expo-notifications');
@@ -21,11 +19,11 @@ if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient && Const
     });
     Notifications = mod;
   } catch (e) {
-    console.warn("Error inicializando notificaciones locales:", e);
+    console.warn('Error inicializando notificaciones locales:', e);
     Notifications = null;
   }
 } else {
-  console.log("Notificaciones desactivadas: Ejecutando en Expo Go.");
+  console.log('Notificaciones desactivadas: ejecutando en Expo Go.');
 }
 
 export async function ensurePermissions(): Promise<boolean> {
@@ -40,15 +38,15 @@ export async function scheduleReminder(opts: {
   id?: number;
   timeHHMM: string;   // "08:00"
   label: string;
-  days?: number[];    // 1=Sun..7=Sat per expo; we'll schedule each
+  days?: number[];
 }): Promise<number> {
   const ok = await ensurePermissions();
   if (!ok) {
     console.log('Permiso de notificaciones denegado o no soportado en este entorno');
-    return -1; // Return dummy ID if notifications aren't supported
+    return -1;
   }
 
-  // Cancel any existing notification for this reminder to avoid duplicates
+  // Cancela la notificación anterior antes de crear una nueva para evitar duplicados
   if (opts.id) {
     const existing = await getReminderById(opts.id);
     if (existing?.notification_id) {
@@ -61,6 +59,7 @@ export async function scheduleReminder(opts: {
   if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || h > 23 || m < 0 || m > 59) {
     throw new Error(`Formato de hora inválido: "${opts.timeHHMM}". Se esperaba HH:MM.`);
   }
+
   const notifId = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'CardioLog',
@@ -90,6 +89,8 @@ export async function cancelReminder(notificationId: string | null) {
   await Notifications.cancelScheduledNotificationAsync(notificationId);
 }
 
+// Al iniciar la app, reprograma los recordatorios habilitados que perdieron su notificationId
+// (puede ocurrir si la app se reinstala o se limpia la caché de notificaciones del sistema).
 export async function syncAllFromDb() {
   const rows = await listReminders();
   for (const r of rows) {

@@ -1,5 +1,3 @@
-// app/onboarding.tsx — 5-step onboarding that saves to SQLite
-
 import { useState } from 'react';
 import { View, Text, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';

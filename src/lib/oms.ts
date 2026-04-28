@@ -1,4 +1,4 @@
-// src/lib/oms.ts — Clasificación OMS (idéntica al prototipo)
+// Clasificación de presión arterial según rangos de la OMS
 
 export type OMSCategoryId =
   | 'optima' | 'normal' | 'normalAlta' | 'hta1' | 'hta2' | 'hta3';
@@ -13,14 +13,15 @@ export interface OMSCategory {
 }
 
 export const OMS_CATEGORIES: OMSCategory[] = [
-  { id: 'optima',     label: { es: 'Óptima',      en: 'Optimal' },     sys: [0, 119],   dia: [0, 79],   color: '#10b981', rangeText: '<120 / <80' },
-  { id: 'normal',     label: { es: 'Normal',      en: 'Normal' },      sys: [120, 129], dia: [80, 84],  color: '#84cc16', rangeText: '120-129 / 80-84' },
-  { id: 'normalAlta', label: { es: 'Normal alta', en: 'High normal' }, sys: [130, 139], dia: [85, 89],  color: '#facc15', rangeText: '130-139 / 85-89' },
-  { id: 'hta1',       label: { es: 'HTA Grado 1', en: 'Stage 1' },     sys: [140, 159], dia: [90, 99],  color: '#fb923c', rangeText: '140-159 / 90-99' },
-  { id: 'hta2',       label: { es: 'HTA Grado 2', en: 'Stage 2' },     sys: [160, 179], dia: [100, 109],color: '#ef4444', rangeText: '160-179 / 100-109' },
-  { id: 'hta3',       label: { es: 'HTA Grado 3', en: 'Stage 3' },     sys: [180, 300], dia: [110, 300],color: '#b91c1c', rangeText: '≥180 / ≥110' },
+  { id: 'optima',     label: { es: 'Óptima',      en: 'Optimal' },     sys: [0, 119],   dia: [0, 79],    color: '#10b981', rangeText: '<120 / <80' },
+  { id: 'normal',     label: { es: 'Normal',      en: 'Normal' },      sys: [120, 129], dia: [80, 84],   color: '#84cc16', rangeText: '120-129 / 80-84' },
+  { id: 'normalAlta', label: { es: 'Normal alta', en: 'High normal' }, sys: [130, 139], dia: [85, 89],   color: '#facc15', rangeText: '130-139 / 85-89' },
+  { id: 'hta1',       label: { es: 'HTA Grado 1', en: 'Stage 1' },     sys: [140, 159], dia: [90, 99],   color: '#fb923c', rangeText: '140-159 / 90-99' },
+  { id: 'hta2',       label: { es: 'HTA Grado 2', en: 'Stage 2' },     sys: [160, 179], dia: [100, 109], color: '#ef4444', rangeText: '160-179 / 100-109' },
+  { id: 'hta3',       label: { es: 'HTA Grado 3', en: 'Stage 3' },     sys: [180, 300], dia: [110, 300], color: '#b91c1c', rangeText: '≥180 / ≥110' },
 ];
 
+// La clasificación final es la más severa entre sistólica y diastólica (criterio OMS).
 export function classifyBP(sys: number, dia: number): OMSCategory {
   const last = OMS_CATEGORIES.length - 1;
   let idxS = OMS_CATEGORIES.findIndex(c => sys >= c.sys[0] && sys <= c.sys[1]);

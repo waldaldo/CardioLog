@@ -1,7 +1,6 @@
-// app/(tabs)/index.tsx — Home screen (functional)
-
+import { useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
 import { useProfile } from '@/hooks/useProfile';
 import { classifyBP, bmiOf } from '@/lib/oms';
@@ -13,8 +12,11 @@ import { TabFade } from '@/components/TabFade';
 import { palette } from '@/theme/tokens';
 
 export default function HomeScreen() {
-  const { readings } = useReadings();
+  const { readings, refresh } = useReadings();
   const { profile } = useProfile();
+
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+
   if (!profile) return null;
 
   const latest = readings[readings.length - 1];
@@ -61,8 +63,10 @@ export default function HomeScreen() {
       )}
 
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-        <AvgCard label="7 días" sys={avgSys7} dia={avgDia7} color="#00f0ff"/>
-        <AvgCard label="30 días" sys={avg(last30, 'sys')} dia={avg(last30, 'dia')} color="#a78bfa"/>
+        <AvgCard label="7 días" sys={avgSys7} dia={avgDia7} color="#00f0ff"
+                 onPress={() => router.push({ pathname: '/readings-detail', params: { days: '7' } })}/>
+        <AvgCard label="30 días" sys={avg(last30, 'sys')} dia={avg(last30, 'dia')} color="#a78bfa"
+                 onPress={() => router.push({ pathname: '/readings-detail', params: { days: '30' } })}/>
       </View>
 
       {readings.length > 1 && (
@@ -108,9 +112,11 @@ export default function HomeScreen() {
   );
 }
 
-function AvgCard({ label, sys, dia, color }: { label: string; sys: number; dia: number; color: string }) {
+function AvgCard({ label, sys, dia, color, onPress }: {
+  label: string; sys: number; dia: number; color: string; onPress: () => void;
+}) {
   return (
-    <View style={{
+    <Pressable onPress={onPress} style={{
       flex: 1, padding: 14, borderRadius: 16,
       backgroundColor: palette.glassBg, borderWidth: 1, borderColor: palette.glassBorder,
     }}>
@@ -120,6 +126,7 @@ function AvgCard({ label, sys, dia, color }: { label: string; sys: number; dia: 
         <Text style={{ color: palette.textMuted }}>/</Text>
         <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{dia || '—'}</Text>
       </View>
-    </View>
+      <Text style={{ color: palette.textMuted, fontSize: 10, marginTop: 6 }}>Ver detalle →</Text>
+    </Pressable>
   );
 }

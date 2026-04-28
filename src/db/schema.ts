@@ -1,5 +1,3 @@
-// src/db/schema.ts — SQLite schema
-
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS profile (
   id INTEGER PRIMARY KEY CHECK (id = 1),

@@ -1,5 +1,3 @@
-// src/theme/tokens.ts — Design tokens portados del prototipo
-
 export const palette = {
   bgDark: '#07070a',
   bgElevated: '#151522',
@@ -9,7 +7,7 @@ export const palette = {
   glassBg: 'rgba(20,20,24,0.6)',
   glassBorder: 'rgba(255,255,255,0.08)',
 
-  // Light theme
+  // Tema claro (implementación pendiente)
   bgLight: '#f5f7fb',
   bgLightElevated: '#ffffff',
   textLightPrimary: '#0f172a',
@@ -46,5 +44,5 @@ export const typography = {
   },
 };
 
-export const spacing = (n: number) => n * 4; // 4px base
+export const spacing = (n: number) => n * 4; // unidad base de 4px
 export const radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };

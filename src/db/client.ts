@@ -1,8 +1,8 @@
-// src/db/client.ts — SQLite client wrapper
-
 import * as SQLite from 'expo-sqlite';
 import { SCHEMA_SQL, DEFAULT_SETTINGS } from './schema';
 
+// Singleton: una sola conexión reutilizada en toda la app.
+// _pending evita que dos llamadas simultáneas en el arranque abran la BD dos veces.
 let _db: SQLite.SQLiteDatabase | null = null;
 let _pending: Promise<SQLite.SQLiteDatabase> | null = null;
 

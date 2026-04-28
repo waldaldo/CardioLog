@@ -1,5 +1,3 @@
-// src/components/AreaChart.tsx — BP trend chart with OMS zones
-
 import React from 'react';
 import Svg, { Path, Line, Text as SvgText, Rect, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 

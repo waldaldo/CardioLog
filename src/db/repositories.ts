@@ -1,7 +1,7 @@
-// src/db/repositories.ts — Typed CRUD
-
 import { getDb } from './client';
 import { classifyBP } from '../lib/oms';
+
+// Tipos que reflejan exactamente las columnas de cada tabla
 
 export interface Profile {
   name: string;
@@ -14,25 +14,26 @@ export interface Profile {
 
 export interface Reading {
   id: string;
-  ts: string;           // ISO datetime
+  ts: string;           // ISO datetime — ej: "2025-04-28T10:30:00.000Z"
   sys: number;
   dia: number;
   pulse: number;
   moment: 'morning' | 'afternoon' | 'evening' | null;
   note: string;
-  category_id: string;
+  category_id: string;  // id de la categoría OMS calculada al guardar
 }
 
 export interface Reminder {
   id: number;
-  time_hhmm: string;    // "08:00"
+  time_hhmm: string;    // formato "08:00"
   label: string;
-  days_mask: number;    // bitmask Mon..Sun
+  days_mask: number;    // bitmask de 7 bits, uno por día de la semana (127 = todos)
   enabled: boolean;
   notification_id: string | null;
 }
 
-// ---------- Profile ----------
+// ---------- Perfil ----------
+
 export async function getProfile(): Promise<Profile | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<Profile>(`SELECT * FROM profile WHERE id = 1`);
@@ -52,7 +53,8 @@ export async function saveProfile(p: Profile): Promise<void> {
   );
 }
 
-// ---------- Readings ----------
+// ---------- Mediciones ----------
+
 export async function listReadings(limit = 500): Promise<Reading[]> {
   const db = await getDb();
   return db.getAllAsync<Reading>(
@@ -84,10 +86,12 @@ export async function readingsSince(isoDate: string): Promise<Reading[]> {
   );
 }
 
-// ---------- Reminders ----------
+// ---------- Recordatorios ----------
+
 export async function listReminders(): Promise<Reminder[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(`SELECT * FROM reminders ORDER BY time_hhmm ASC`);
+  // SQLite guarda booleanos como 0/1; los convertimos a boolean de JS
   return rows.map(r => ({ ...r, enabled: !!r.enabled }));
 }
 
@@ -115,7 +119,8 @@ export async function upsertReminder(r: Omit<Reminder, 'id'> & { id?: number }):
   return res.lastInsertRowId;
 }
 
-// ---------- Settings ----------
+// ---------- Ajustes ----------
+
 export async function getSetting(key: string): Promise<string | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<{ value: string }>(
@@ -132,7 +137,8 @@ export async function setSetting(key: string, value: string): Promise<void> {
   );
 }
 
-// ---------- Backups ----------
+// ---------- Respaldos ----------
+
 export async function logBackup(driveFileId: string | null, recordCount: number, status = 'ok') {
   const db = await getDb();
   await db.runAsync(

@@ -1,5 +1,3 @@
-// src/lib/i18n.ts
-
 export const I18N = {
   es: {
     appName: 'CardioLog',

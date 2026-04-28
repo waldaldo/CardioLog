@@ -1,6 +1,6 @@
-// app/(tabs)/history.tsx — history list grouped by day
-
+import { useCallback } from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
 import { classifyBP } from '@/lib/oms';
 import { AreaChart } from '@/components/AreaChart';
@@ -8,7 +8,8 @@ import { TabFade } from '@/components/TabFade';
 import { palette } from '@/theme/tokens';
 
 export default function History() {
-  const { readings } = useReadings();
+  const { readings, refresh } = useReadings();
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
   const reversed = [...readings].reverse();
   const grouped: Record<string, typeof readings> = {};
   for (const r of reversed) {
