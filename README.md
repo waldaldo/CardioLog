@@ -9,7 +9,7 @@ Aplicación móvil para registro y seguimiento de presión arterial, construida 
 - Promedios de 7 y 30 días con acceso al detalle de cada rango
 - Recomendaciones de estilo de vida personalizadas según presión e IMC
 - Recordatorios locales programables
-- Respaldo en Google Drive (exporta e importa en JSON)
+- Exportar e importar respaldo en JSON (compatible con Google Drive, correo, etc.)
 - Perfil editable con cálculo de IMC automático
 - Tema oscuro
 
@@ -19,7 +19,7 @@ Aplicación móvil para registro y seguimiento de presión arterial, construida 
 - **Expo Router** — navegación basada en archivos (tabs + stack)
 - **expo-sqlite** — base de datos local SQLite
 - **expo-notifications** — recordatorios locales
-- **expo-auth-session** + Google Drive API — respaldo en la nube
+- **expo-document-picker** + **expo-sharing** — exportar e importar respaldos sin OAuth
 - **react-native-reanimated** — animaciones de transición sin parpadeo
 - **react-native-svg** — gráfico de tendencia de presión arterial
 
@@ -79,7 +79,7 @@ src/
 │   ├── recommendations.ts    # Recomendaciones según presión e IMC
 │   ├── i18n.ts               # Textos ES/EN + funciones de fecha y promedio
 │   ├── notifications.ts      # Programación de recordatorios locales
-│   └── drive.ts              # Integración con Google Drive
+│   └── drive.ts              # Exportar/importar respaldos JSON (expo-sharing + expo-document-picker)
 ├── components/
 │   ├── AreaChart.tsx         # Gráfico SVG de tendencia con zonas OMS
 │   ├── ScreenSlide.tsx       # Animación de entrada para pantallas de stack
@@ -89,15 +89,22 @@ src/
     └── tokens.ts             # Colores, tipografía y espaciado base
 ```
 
-## Configurar Google Drive (opcional)
+## Respaldo y restauración
 
-1. Crea un proyecto en [Google Cloud Console](https://console.cloud.google.com)
-2. Activa la **Google Drive API**
-3. Crea credenciales **OAuth 2.0** de tipo Android
-4. Agrega tu Client ID en un archivo `.env` en la raíz del proyecto:
+El respaldo no requiere configuración ni cuentas adicionales.
 
-```
-EXPO_PUBLIC_GOOGLE_CLIENT_ID=xxxxxxxxxx.apps.googleusercontent.com
+- **Exportar:** genera un archivo `cardiolog-backup-YYYY-MM-DD.json` y abre el menú de compartir del sistema. El usuario elige dónde guardarlo (Google Drive, correo, Telegram, almacenamiento local, etc.).
+- **Importar:** abre el selector de archivos del sistema para elegir un respaldo `.json` previo. Muestra un resumen antes de confirmar, y reemplaza el perfil y mediciones actuales con los datos del archivo.
+
+El formato del archivo de respaldo es:
+
+```json
+{
+  "version": 1,
+  "exported_at": "2025-04-29T10:00:00.000Z",
+  "profile": { "name": "...", "age": 60, ... },
+  "readings": [ { "ts": "...", "sys": 120, "dia": 80, ... } ]
+}
 ```
 
 ## Clasificación OMS

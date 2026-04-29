@@ -79,6 +79,21 @@ export async function deleteReading(id: string): Promise<void> {
   await db.runAsync(`DELETE FROM readings WHERE id = ?`, [id]);
 }
 
+export async function clearAllReadings(): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(`DELETE FROM readings`);
+}
+
+// Inserta una medición conservando el id y category_id originales del respaldo.
+export async function insertReadingRaw(r: Reading): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT OR IGNORE INTO readings(id, ts, sys, dia, pulse, moment, note, category_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [r.id, r.ts, r.sys, r.dia, r.pulse, r.moment ?? null, r.note ?? '', r.category_id]
+  );
+}
+
 export async function readingsSince(isoDate: string): Promise<Reading[]> {
   const db = await getDb();
   return db.getAllAsync<Reading>(
