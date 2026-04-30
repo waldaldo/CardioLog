@@ -8,7 +8,6 @@ import { useProfile } from '@/hooks/useProfile';
 import { bmiOf } from '@/lib/oms';
 import { avg, daysAgo } from '@/lib/i18n';
 import { getRecommendations } from '@/lib/recommendations';
-import { ScreenSlide } from '@/components/ScreenSlide';
 import { palette } from '@/theme/tokens';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -37,7 +36,6 @@ export default function Recommendations() {
   };
 
   return (
-    <ScreenSlide>
     <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
@@ -94,7 +92,6 @@ export default function Recommendations() {
         );
       })}
     </ScrollView>
-    </ScreenSlide>
   );
 }
 

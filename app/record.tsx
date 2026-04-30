@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
-import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useReadings } from '@/hooks/useReadings';
 import { classifyBP } from '@/lib/oms';
 import { palette } from '@/theme/tokens';
@@ -29,8 +28,7 @@ export default function RecordScreen() {
   };
 
   return (
-    <Animated.ScrollView
-      entering={SlideInDown.duration(280)}
+    <ScrollView
       style={{ flex: 1, backgroundColor: palette.bgDark }}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
@@ -73,7 +71,7 @@ export default function RecordScreen() {
                  style={{ padding: 18, borderRadius: 14, backgroundColor: '#00f0ff', alignItems: 'center' }}>
         <Text style={{ color: '#07070a', fontSize: 16, fontWeight: '800' }}>Guardar</Text>
       </Pressable>
-    </Animated.ScrollView>
+    </ScrollView>
   );
 }
 

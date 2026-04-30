@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import {
@@ -6,9 +6,6 @@ import {
   saveProfile, clearAllReadings, insertReadingRaw,
   Profile, Reading,
 } from '../db/repositories';
-
-// Los respaldos se guardan localmente aquí antes de compartir.
-const BACKUP_DIR = FileSystem.documentDirectory + 'backups/';
 
 export interface BackupFile {
   name: string;
@@ -22,7 +19,7 @@ export interface BackupPayload {
   readings: Reading[];
 }
 
-// Genera el JSON, lo guarda localmente y abre el menú de compartir del sistema.
+// Genera el JSON, lo escribe en cacheDirectory (siempre existe) y abre el menú de compartir.
 // El usuario elige dónde guardarlo (Google Drive, correo, etc.) sin OAuth.
 export async function backupNow(): Promise<{ count: number }> {
   const profile = await getProfile();
@@ -35,13 +32,17 @@ export async function backupNow(): Promise<{ count: number }> {
     readings,
   };
 
-  await FileSystem.makeDirectoryAsync(BACKUP_DIR, { intermediates: true });
-
   const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  const fileUri = BACKUP_DIR + filename;
-  await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(payload, null, 2));
 
-  await Sharing.shareAsync(fileUri, {
+  // cacheDirectory siempre existe — no necesita makeDirectoryAsync
+  const cacheUri = FileSystem.cacheDirectory + filename;
+  await FileSystem.writeAsStringAsync(cacheUri, JSON.stringify(payload, null, 2));
+
+  // Copia al documentDirectory para persistir en la lista de respaldos locales
+  const docUri = FileSystem.documentDirectory + filename;
+  await FileSystem.copyAsync({ from: cacheUri, to: docUri });
+
+  await Sharing.shareAsync(cacheUri, {
     mimeType: 'application/json',
     dialogTitle: 'Guardar respaldo de CardioLog',
   });
@@ -51,7 +52,6 @@ export async function backupNow(): Promise<{ count: number }> {
 }
 
 // Abre el selector de archivos, lee el JSON y devuelve el contenido validado.
-// Lanza un error si el archivo no tiene el formato correcto.
 export async function pickAndReadBackup(): Promise<BackupPayload> {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'application/json',
@@ -87,14 +87,14 @@ export async function restoreBackup(payload: BackupPayload): Promise<{ count: nu
   return { count: payload.readings.length };
 }
 
-// Lista los archivos de respaldo guardados localmente en el dispositivo.
+// Lista los archivos de respaldo guardados en documentDirectory.
 export async function listLocalBackups(): Promise<BackupFile[]> {
   try {
-    await FileSystem.makeDirectoryAsync(BACKUP_DIR, { intermediates: true });
-    const names = await FileSystem.readDirectoryAsync(BACKUP_DIR);
+    const dir = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory!);
+    const backups = dir.filter(n => n.startsWith('cardiolog-backup-') && n.endsWith('.json'));
     const result: BackupFile[] = [];
-    for (const name of names.filter(n => n.endsWith('.json'))) {
-      const info = await FileSystem.getInfoAsync(BACKUP_DIR + name);
+    for (const name of backups) {
+      const info = await FileSystem.getInfoAsync(FileSystem.documentDirectory + name);
       result.push({
         name,
         modifiedTime: info.exists && info.modificationTime

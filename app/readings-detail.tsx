@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
 import { classifyBP } from '@/lib/oms';
 import { daysAgo, avg } from '@/lib/i18n';
-import { ScreenSlide } from '@/components/ScreenSlide';
 import { palette } from '@/theme/tokens';
 
 export default function ReadingsDetail() {
@@ -27,7 +26,6 @@ export default function ReadingsDetail() {
   const avgPulse = avg(filtered, 'pulse');
 
   return (
-    <ScreenSlide>
     <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
 
@@ -91,7 +89,6 @@ export default function ReadingsDetail() {
         </Text>
       )}
     </ScrollView>
-    </ScreenSlide>
   );
 }
 

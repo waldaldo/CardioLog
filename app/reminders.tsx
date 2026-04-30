@@ -5,7 +5,6 @@ import { View, Text, Pressable, Switch, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { listReminders, upsertReminder, Reminder } from '@/db/repositories';
 import { scheduleReminder, cancelReminder } from '@/lib/notifications';
-import { ScreenSlide } from '@/components/ScreenSlide';
 import { palette } from '@/theme/tokens';
 
 export default function Reminders() {
@@ -38,7 +37,6 @@ export default function Reminders() {
   };
 
   return (
-    <ScreenSlide>
     <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
@@ -76,6 +74,5 @@ export default function Reminders() {
         </Text>
       </Pressable>
     </ScrollView>
-    </ScreenSlide>
   );
 }

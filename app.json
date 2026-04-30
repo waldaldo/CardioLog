@@ -38,6 +38,14 @@
       "expo-router",
       "expo-sqlite",
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#07070a",
+          "image": "./assets/splash.png",
+          "resizeMode": "cover"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
