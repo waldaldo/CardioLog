@@ -7,6 +7,7 @@ import Animated, {
   FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
+import { ThemeProvider, DarkTheme } from '@react-navigation/native';
 import { getDb } from '@/db/client';
 import { getProfile } from '@/db/repositories';
 import { syncAllFromDb } from '@/lib/notifications';
@@ -14,6 +15,14 @@ import { Logo } from '@/components/Logo';
 import { palette } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const customDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: palette.bgDark,
+  },
+};
 
 // Overlay animado que se muestra mientras carga la BD.
 // Coincide con el splash nativo para una transición imperceptible.
@@ -112,27 +121,29 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.bgDark }}>
-      <StatusBar style="light"/>
-      <Stack screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: palette.bgDark, paddingTop: insets.top },
-        sceneContainerStyle: { backgroundColor: palette.bgDark },
-        animation: 'slide_from_right',
-      }}>
-        <Stack.Screen name="(tabs)"/>
-        <Stack.Screen name="onboarding" options={{ animation: 'fade' }}/>
-        <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
-        <Stack.Screen name="recommendations"/>
-        <Stack.Screen name="reminders"/>
-        <Stack.Screen name="backup"/>
-        <Stack.Screen name="settings"/>
-        <Stack.Screen name="readings-detail"/>
-      </Stack>
+    <ThemeProvider value={customDarkTheme}>
+      <View style={{ flex: 1, backgroundColor: palette.bgDark }}>
+        <StatusBar style="light"/>
+        <Stack screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: palette.bgDark, paddingTop: insets.top },
+          sceneContainerStyle: { backgroundColor: palette.bgDark },
+          animation: 'slide_from_right',
+        }}>
+          <Stack.Screen name="(tabs)"/>
+          <Stack.Screen name="onboarding" options={{ animation: 'fade' }}/>
+          <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+          <Stack.Screen name="recommendations"/>
+          <Stack.Screen name="reminders"/>
+          <Stack.Screen name="backup"/>
+          <Stack.Screen name="settings"/>
+          <Stack.Screen name="readings-detail"/>
+        </Stack>
 
-      {/* El overlay se renderiza encima del Stack y se desvanece al terminar la carga */}
-      {showOverlay && <LoadingOverlay />}
-    </View>
+        {/* El overlay se renderiza encima del Stack y se desvanece al terminar la carga */}
+        {showOverlay && <LoadingOverlay />}
+      </View>
+    </ThemeProvider>
   );
 }
 
