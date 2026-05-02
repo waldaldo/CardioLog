@@ -4,24 +4,39 @@ describe('getColors', () => {
   it('retorna colores oscuros cuando isDark=true', () => {
     const c = getColors(true);
     expect(c.bg).toBe(palette.bgDark);
-    expect(c.text).toBe(palette.textPrimary);
-    expect(c.glassBg).toBe(palette.glassBg);
+    expect(c.text).toBe(palette.textDarkPrimary);
+    expect(c.bgCard).toBe(palette.bgDarkCard);
   });
 
   it('retorna colores claros cuando isDark=false', () => {
     const c = getColors(false);
     expect(c.bg).toBe(palette.bgLight);
     expect(c.text).toBe(palette.textLightPrimary);
-    expect(c.glassBg).toBe(palette.glassLightBg);
+    expect(c.bgCard).toBe(palette.bgLightCard);
   });
 
-  it('ambos temas tienen todas las propiedades', () => {
+  it('ambos temas exponen todas las propiedades del esquema', () => {
     const dark = getColors(true);
     const light = getColors(false);
-    const keys = ['bg', 'bgElevated', 'text', 'textSecondary', 'textMuted', 'glassBg', 'glassBorder', 'borderSubtle'];
+    const keys: Array<keyof typeof dark> = [
+      'bg', 'bgElevated', 'bgCard',
+      'text', 'textSecondary', 'textMuted',
+      'border', 'borderSubtle',
+      'surfaceSubtle', 'surfaceRaised',
+      'primary', 'primaryStrong', 'secondary', 'onPrimary',
+      'accentBg', 'accentBgStrong', 'accentBorder',
+      'glassBg', 'glassBorder',
+    ];
     for (const k of keys) {
-      expect(dark[k as keyof typeof dark]).toBeTruthy();
-      expect(light[k as keyof typeof light]).toBeTruthy();
+      expect(dark[k]).toBeTruthy();
+      expect(light[k]).toBeTruthy();
     }
+  });
+
+  it('expone paleta OMS específica por tema', () => {
+    const dark = getColors(true);
+    const light = getColors(false);
+    expect(dark.oms.optima).toBe('#10b981');
+    expect(light.oms.optima).toBe('#047857'); // versión accesible para fondo claro
   });
 });

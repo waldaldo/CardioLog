@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { Reading, Profile } from '../db/repositories';
 import { Lang, avg, daysAgo } from './i18n';
 import { OMS_CATEGORIES, OMSCategoryId } from './oms';
+import { omsColors } from '@/theme/tokens';
 import { buildChartSvg } from './chartSvg';
 
 export type PdfPeriod = 'all' | '30d' | '90d';
@@ -78,15 +79,17 @@ export function buildReportHtml(
 
   const desc = filtered.slice().sort((a, b) => b.ts.localeCompare(a.ts));
   const capped = desc.length > 200;
+  // El PDF se imprime sobre fondo blanco — usamos la paleta OMS accesible para tema claro
   const rows = desc.slice(0, 200).map(r => {
     const cat = catById(r.category_id);
+    const catColor = omsColors.light[cat.id];
     return `<tr>
       <td>${fmtDate(r.ts)}</td>
       <td>${fmtTime(r.ts)}</td>
-      <td style="color:${cat.color};font-weight:700">${r.sys}</td>
+      <td style="color:${catColor};font-weight:700">${r.sys}</td>
       <td>${r.dia}</td>
-      <td style="color:#a78bfa">${r.pulse}</td>
-      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cat.color};margin-right:6px;vertical-align:middle"></span>${cat.label[lang]}</td>
+      <td style="color:#6d28d9">${r.pulse}</td>
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${catColor};margin-right:6px;vertical-align:middle"></span>${cat.label[lang]}</td>
     </tr>`;
   }).join('\n');
 
@@ -134,13 +137,13 @@ ${count === 0 ? `<p style="color:#64748b;text-align:center;padding:32px 0">${l.n
 <div class="stats">
   <div class="card"><div class="val" style="color:#00b8c8">${avgSys}</div><div class="lbl">${l.avgSys}</div></div>
   <div class="card"><div class="val">${avgDia}</div><div class="lbl">${l.avgDia}</div></div>
-  <div class="card"><div class="val" style="color:#a78bfa">${avgPulse}</div><div class="lbl">${l.avgPulse}</div></div>
-  <div class="card"><div class="val" style="color:#10b981">${count}</div><div class="lbl">${l.measurements}</div></div>
+  <div class="card"><div class="val" style="color:#6d28d9">${avgPulse}</div><div class="lbl">${l.avgPulse}</div></div>
+  <div class="card"><div class="val" style="color:#047857">${count}</div><div class="lbl">${l.measurements}</div></div>
 </div>
 
-${dominant ? `<div class="dom" style="background:${dominant.color}18;border:1px solid ${dominant.color}44">
-  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dominant.color}"></span>
-  <span style="font-weight:700;color:${dominant.color}">${dominant.label[lang]}</span>
+${dominant ? `<div class="dom" style="background:${omsColors.light[dominant.id]}18;border:1px solid ${omsColors.light[dominant.id]}44">
+  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${omsColors.light[dominant.id]}"></span>
+  <span style="font-weight:700;color:${omsColors.light[dominant.id]}">${dominant.label[lang]}</span>
   <span style="color:#64748b;font-size:12px;margin-left:4px">${dominant.rangeText}</span>
 </div>` : ''}
 

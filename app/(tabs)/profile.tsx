@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 import { useProfile } from '@/hooks/useProfile';
 import { bmiOf, bmiCategory } from '@/lib/oms';
 import { TabFade } from '@/components/TabFade';
@@ -48,37 +49,38 @@ export default function Profile() {
   ];
 
   const inputStyle = {
-    color: '#00f0ff', fontSize: 18, fontWeight: '800' as const,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(0,240,255,0.4)',
+    color: colors.primary, fontSize: 18, fontWeight: '800' as const,
+    borderBottomWidth: 1, borderBottomColor: colors.primary,
     paddingVertical: 2, minWidth: 50, textAlign: 'center' as const,
   };
 
   return (
     <TabFade>
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 16 }}>{t('profile')}</Text>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+        <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 16 }}>{t('profile')}</Text>
 
         <View style={{
-      padding: 20, borderRadius: 20, alignItems: 'center',
-      backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorder, marginBottom: 14,
+          padding: 20, borderRadius: 20, alignItems: 'center',
+          backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border, marginBottom: 14,
         }}>
           <View style={{
-            width: 80, height: 80, borderRadius: 40, backgroundColor: '#00f0ff',
+            width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryStrong,
             alignItems: 'center', justifyContent: 'center', marginBottom: 12,
           }}>
-            <Text style={{ color: '#07070a', fontSize: 28, fontWeight: '800' }}>
+            <Text style={{ color: colors.onPrimary, fontSize: 28, fontWeight: '800' }}>
               {(profile.name || '?').slice(0, 2).toUpperCase()}
             </Text>
           </View>
-    <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{profile.name}</Text>
-    <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{profile.name}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
             {editing ? (
               <TextInput
                 value={draft.age}
                 onChangeText={v => setDraft(d => ({ ...d, age: v }))}
                 keyboardType="number-pad"
-                style={[inputStyle, { fontSize: 13, color: colors.text }]}
+                accessibilityLabel={t('onbAge')}
+                style={[inputStyle, { fontSize: 14, color: colors.text }]}
               />
             ) : `${profile.age} ${t('years')}`}
             {' · '}{profile.sex === 'M' ? t('male') : t('female')}
@@ -92,20 +94,22 @@ export default function Profile() {
                     value={draft.weight_kg}
                     onChangeText={v => setDraft(d => ({ ...d, weight_kg: v }))}
                     keyboardType="decimal-pad"
+                    accessibilityLabel={t('weight')}
                     style={inputStyle}
                   />
-        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 }}>{t('weight').toUpperCase()}</Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 2 }}>{t('weightUnit')}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 }}>{t('weight').toUpperCase()}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{t('weightUnit')}</Text>
                 </View>
                 <View style={{ flex: 1, alignItems: 'center' }}>
                   <TextInput
                     value={draft.height_cm}
                     onChangeText={v => setDraft(d => ({ ...d, height_cm: v }))}
                     keyboardType="number-pad"
+                    accessibilityLabel={t('height')}
                     style={inputStyle}
                   />
-        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 }}>{t('height').toUpperCase()}</Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 2 }}>{t('heightUnit')}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 4 }}>{t('height').toUpperCase()}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{t('heightUnit')}</Text>
                 </View>
                 <Stat label={t('bmi')} value={bmiOf(parseFloat(draft.weight_kg)||profile.weight_kg, parseFloat(draft.height_cm)||profile.height_cm).toFixed(1)}
                   unit={bmiCategory(bmiOf(parseFloat(draft.weight_kg)||profile.weight_kg, parseFloat(draft.height_cm)||profile.height_cm), lang)}/>
@@ -123,33 +127,44 @@ export default function Profile() {
             {editing ? (
               <>
                 <Pressable onPress={saveEdit}
-                  style={{ paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10, backgroundColor: '#00f0ff' }}>
-                  <Text style={{ color: '#07070a', fontWeight: '800', fontSize: 13 }}>{t('save')}</Text>
+                  accessibilityRole="button" accessibilityLabel={t('save')}
+                  style={({ pressed }) => ({ paddingHorizontal: 22, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.primaryStrong, opacity: pressed ? 0.85 : 1 })}>
+                  <Text style={{ color: colors.onPrimary, fontWeight: '800', fontSize: 14 }}>{t('save')}</Text>
                 </Pressable>
                 <Pressable onPress={() => setEditing(false)}
-          style={{ paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.08)' }}>
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 13 }}>{t('cancel')}</Text>
+                  accessibilityRole="button" accessibilityLabel={t('cancel')}
+                  style={({ pressed }) => ({ paddingHorizontal: 22, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.border, opacity: pressed ? 0.85 : 1 })}>
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>{t('cancel')}</Text>
                 </Pressable>
               </>
             ) : (
               <Pressable onPress={startEdit}
-                style={{ paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10, backgroundColor: 'rgba(0,240,255,0.1)', borderWidth: 1, borderColor: 'rgba(0,240,255,0.3)' }}>
-                <Text style={{ color: '#00f0ff', fontWeight: '700', fontSize: 13 }}>{t('editData')}</Text>
+                accessibilityRole="button" accessibilityLabel={t('editData')}
+                style={({ pressed }) => ({
+                  paddingHorizontal: 22, paddingVertical: 10, borderRadius: 12,
+                  backgroundColor: colors.accentBg, borderWidth: 1, borderColor: colors.accentBorder,
+                  opacity: pressed ? 0.85 : 1,
+                })}>
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>{t('editData')}</Text>
               </Pressable>
             )}
           </View>
         </View>
 
-        <View style={{ backgroundColor: colors.glassBg, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+        <View style={{ backgroundColor: colors.bgCard, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
           {items.map((it, i) => (
             <Pressable key={it.label} onPress={() => router.push(it.nav as any)}
-              style={{
+              accessibilityRole="button" accessibilityLabel={it.label}
+              style={({ pressed }) => ({
                 padding: 16, flexDirection: 'row', alignItems: 'center',
-        borderBottomWidth: i < items.length - 1 ? 1 : 0,
-        borderBottomColor: colors.borderSubtle,
-              }}>
-      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 }}>{it.label}</Text>
-      <Text style={{ color: colors.textMuted }}>›</Text>
+                borderBottomWidth: i < items.length - 1 ? 1 : 0,
+                borderBottomColor: colors.borderSubtle,
+                opacity: pressed ? 0.7 : 1,
+              })}>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{it.label}</Text>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                <Path d="M9 6l6 6-6 6" stroke={colors.textMuted} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"/>
+              </Svg>
             </Pressable>
           ))}
         </View>
@@ -162,11 +177,11 @@ function Stat({ label, value, unit }: { label: string; value: string; unit: stri
   const { colors } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={{ color: '#00f0ff', fontSize: 18, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
+      <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '800' }}>{value}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
         {label.toUpperCase()}
       </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 2 }}>{unit}</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>{unit}</Text>
     </View>
   );
 }

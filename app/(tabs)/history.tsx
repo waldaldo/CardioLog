@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 import { useReadings } from '@/hooks/useReadings';
 import { useProfile } from '@/hooks/useProfile';
-import { classifyBP } from '@/lib/oms';
+import { classifyBP, omsColorFor } from '@/lib/oms';
 import { exportPdfReport } from '@/lib/pdfReport';
 import { AreaChart } from '@/components/AreaChart';
 import { TabFade } from '@/components/TabFade';
@@ -14,7 +15,7 @@ export default function History() {
   const { readings, refresh } = useReadings();
   const { profile } = useProfile();
   const { lang, locale, t } = useLang();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [pdfBusy, setPdfBusy] = useState(false);
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
@@ -43,27 +44,33 @@ export default function History() {
 
   return (
     <TabFade>
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>{t('history')}</Text>
-        {readings.length > 0 && (
-          <Pressable onPress={onSharePdf} disabled={pdfBusy || !profile}
-                     style={{
-                       width: 40, height: 40, borderRadius: 12,
-                       backgroundColor: 'rgba(239,68,68,0.12)',
-                       alignItems: 'center', justifyContent: 'center',
-                       opacity: (pdfBusy || !profile) ? 0.4 : 1,
-                     }}>
-            <Text style={{ fontSize: 18 }}>↑</Text>
-          </Pressable>
-        )}
-      </View>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>{t('history')}</Text>
+          {readings.length > 0 && (
+            <Pressable onPress={onSharePdf} disabled={pdfBusy || !profile}
+              accessibilityRole="button"
+              accessibilityLabel={t('pdfExportBtn') || 'Exportar PDF'}
+              style={({ pressed }) => ({
+                width: 44, height: 44, borderRadius: 14,
+                backgroundColor: colors.accentBg,
+                borderWidth: 1, borderColor: colors.accentBorder,
+                alignItems: 'center', justifyContent: 'center',
+                opacity: (pdfBusy || !profile) ? 0.4 : pressed ? 0.7 : 1,
+              })}>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M12 4v12m0-12l-5 5m5-5l5 5M5 20h14" stroke={colors.primary} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"/>
+              </Svg>
+            </Pressable>
+          )}
+        </View>
 
         {readings.length > 1 && (
           <View style={{
-      padding: 16, borderRadius: 20, marginBottom: 16,
-      backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorder,
+            padding: 16, borderRadius: 20, marginBottom: 16,
+            backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
           }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
               {t('trendZones')}
@@ -73,7 +80,7 @@ export default function History() {
         )}
 
         {hiddenDaysCount > 0 && (
-          <Text style={{ color: colors.textMuted, fontSize: 11, textAlign: 'center', marginBottom: 12 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center', marginBottom: 12 }}>
             {t('showingLast')} · {hiddenDaysCount} {t('olderHidden')}
           </Text>
         )}
@@ -82,25 +89,29 @@ export default function History() {
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 }}>
               {day.toUpperCase()}
             </Text>
-            <View style={{ backgroundColor: colors.glassBg, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
+            <View style={{ backgroundColor: colors.bgCard, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
               {rows.map((r, i) => {
                 const cat = classifyBP(r.sys, r.dia);
+                const catColor = omsColorFor(cat.id, isDark);
                 const time = new Date(r.ts).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
                 return (
-                  <View key={r.id} style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
-        borderBottomWidth: i < rows.length - 1 ? 1 : 0,
-        borderBottomColor: colors.borderSubtle,
-                  }}>
-                    <View style={{ width: 4, height: 36, borderRadius: 2, backgroundColor: cat.color }}/>
+                  <View key={r.id}
+                    accessibilityRole="text"
+                    accessibilityLabel={`${time}, ${r.sys} sobre ${r.dia}, ${cat.label[lang]}, ${r.pulse} ${t('bpm')}`}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
+                      borderBottomWidth: i < rows.length - 1 ? 1 : 0,
+                      borderBottomColor: colors.borderSubtle,
+                    }}>
+                    <View style={{ width: 4, height: 36, borderRadius: 2, backgroundColor: catColor }}/>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                        <Text style={{ color: cat.color, fontSize: 18, fontWeight: '800' }}>{r.sys}</Text>
-          <Text style={{ color: colors.textMuted }}>/</Text>
-          <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>{r.dia}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 10, marginLeft: 4 }}>{t('mmHg')}</Text>
+                        <Text style={{ color: catColor, fontSize: 18, fontWeight: '800' }}>{r.sys}</Text>
+                        <Text style={{ color: colors.textMuted }}>/</Text>
+                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{r.dia}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, marginLeft: 4 }}>{t('mmHg')}</Text>
                       </View>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                         {time} · {r.pulse} {t('bpm')} · {cat.label[lang]}
                       </Text>
                     </View>
@@ -112,7 +123,7 @@ export default function History() {
         ))}
 
         {readings.length === 0 && (
-          <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: 40 }}>
+          <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: 40, fontSize: 14 }}>
             {t('noRecords')}
           </Text>
         )}

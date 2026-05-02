@@ -60,25 +60,27 @@ export default function Onboarding() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, padding: 28 }}>
       <View style={{ paddingTop: 40 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Logo size={40}/>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Logo size={44}/>
           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>CardioLog</Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 6, marginTop: 18 }}>
+        <View
+          accessibilityLabel={`${t('stepOf')} ${step + 1} ${t('of')} ${STEPS.length}`}
+          style={{ flexDirection: 'row', gap: 6, marginTop: 18 }}>
           {STEPS.map((_, i) => (
             <View key={i} style={{
-              flex: 1, height: 4, borderRadius: 2,
-              backgroundColor: i <= step ? '#00f0ff' : 'rgba(255,255,255,0.1)',
+              flex: 1, height: 5, borderRadius: 3,
+              backgroundColor: i <= step ? colors.primaryStrong : colors.surfaceRaised,
             }}/>
           ))}
         </View>
       </View>
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text style={{ color: '#00f0ff', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 }}>
+        <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 }}>
           {t('stepOf')} {step + 1} {t('of')} {STEPS.length}
         </Text>
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 28, lineHeight: 32 }}>
+        <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 28, lineHeight: 32 }}>
           {t(s.titleKey)}
         </Text>
 
@@ -88,10 +90,11 @@ export default function Onboarding() {
             onChangeText={v => setData({ ...data, [s.field]: v })}
             placeholder={t('placeholderName')}
             placeholderTextColor={colors.textMuted}
+            accessibilityLabel={t(s.titleKey)}
             style={{
               padding: 16, fontSize: 18, color: colors.text,
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+              backgroundColor: colors.bgCard,
+              borderRadius: 14, borderWidth: 1, borderColor: colors.border,
             }}
           />
         )}
@@ -99,41 +102,51 @@ export default function Onboarding() {
         {s.kind === 'num' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => setData({ ...data, [s.field]: Math.max(s.min ?? 0, (data[s.field] as number) - 1) })}
-              style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 26 }}>–</Text>
+              accessibilityRole="button" accessibilityLabel="Disminuir"
+              style={({ pressed }) => ({ width: 56, height: 56, borderRadius: 16, backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+              <Text style={{ color: colors.text, fontSize: 28, fontWeight: '600' }}>–</Text>
             </Pressable>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Text style={{ color: '#00f0ff', fontSize: 72, fontWeight: '800', lineHeight: 72 }}>{data[s.field]}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginTop: 6 }}>
+              <Text accessibilityLiveRegion="polite" style={{ color: colors.primary, fontSize: 72, fontWeight: '800', lineHeight: 76 }}>{data[s.field]}</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginTop: 6 }}>
                 {s.unitKey ? t(s.unitKey).toUpperCase() : ''}
               </Text>
             </View>
             <Pressable onPress={() => setData({ ...data, [s.field]: Math.min(s.max ?? 9999, (data[s.field] as number) + 1) })}
-              style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.text, fontSize: 26 }}>+</Text>
+              accessibilityRole="button" accessibilityLabel="Aumentar"
+              style={({ pressed }) => ({ width: 56, height: 56, borderRadius: 16, backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+              <Text style={{ color: colors.text, fontSize: 28, fontWeight: '600' }}>+</Text>
             </Pressable>
           </View>
         )}
 
         {s.kind === 'choice' && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {(s.options ?? []).map(opt => (
-              <Pressable key={opt[0]} onPress={() => setData({ ...data, [s.field]: opt[0] })}
-                style={{
-                  flex: 1, padding: 20, borderRadius: 16, alignItems: 'center',
-                  backgroundColor: data[s.field] === opt[0] ? 'rgba(0,240,255,0.15)' : 'rgba(255,255,255,0.04)',
-                  borderWidth: 1, borderColor: data[s.field] === opt[0] ? '#00f0ff' : 'rgba(255,255,255,0.08)',
-                }}>
-                <Text style={{ color: data[s.field] === opt[0] ? '#00f0ff' : colors.text, fontSize: 16, fontWeight: '700' }}>{getOptionLabel(opt)}</Text>
-              </Pressable>
-            ))}
+            {(s.options ?? []).map(opt => {
+              const active = data[s.field] === opt[0];
+              return (
+                <Pressable key={opt[0]} onPress={() => setData({ ...data, [s.field]: opt[0] })}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active }}
+                  style={({ pressed }) => ({
+                    flex: 1, padding: 22, borderRadius: 16, alignItems: 'center',
+                    backgroundColor: active ? colors.accentBgStrong : colors.bgCard,
+                    borderWidth: 1.5, borderColor: active ? colors.primary : colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  })}>
+                  <Text style={{ color: active ? colors.primary : colors.text, fontSize: 16, fontWeight: '700' }}>{getOptionLabel(opt)}</Text>
+                </Pressable>
+              );
+            })}
           </View>
         )}
       </View>
 
       <Pressable onPress={next}
-        style={{ padding: 18, borderRadius: 16, backgroundColor: '#00f0ff', alignItems: 'center' }}>
-        <Text style={{ color: '#07070a', fontSize: 16, fontWeight: '800' }}>
+        accessibilityRole="button"
+        accessibilityLabel={step < STEPS.length - 1 ? t('continue') : t('start')}
+        style={({ pressed }) => ({ padding: 18, borderRadius: 16, backgroundColor: colors.primaryStrong, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
+        <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>
           {step < STEPS.length - 1 ? t('continue') : t('start')}
         </Text>
       </Pressable>
