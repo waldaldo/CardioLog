@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, Switch, ScrollView, Alert } from 'react-native';
-import { router } from 'expo-router';
 import { listReminders, upsertReminder, Reminder } from '@/db/repositories';
 import { scheduleReminder, cancelReminder } from '@/lib/notifications';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
+import { ScreenHeader } from '@/components/ScreenHeader';
 
 export default function Reminders() {
   const { t } = useLang();
@@ -41,38 +41,35 @@ export default function Reminders() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
-                contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-        <Pressable onPress={() => router.back()}
-      style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: colors.text, fontSize: 20 }}>←</Text>
-    </Pressable>
-    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginLeft: 12 }}>{t('reminders')}</Text>
-      </View>
+      contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScreenHeader title={t('reminders')}/>
 
       {items.map(r => (
-        <View key={r.id} style={{
-      padding: 16, marginBottom: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center',
-      backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorder,
-        }}>
+        <View key={r.id}
+          accessibilityLabel={`${r.time_hhmm}, ${r.label}, ${r.enabled ? 'activado' : 'desactivado'}`}
+          style={{
+            padding: 16, marginBottom: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center',
+            backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
+          }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: r.enabled ? '#00f0ff' : colors.textMuted, fontSize: 28, fontWeight: '800' }}>
+            <Text style={{ color: r.enabled ? colors.primary : colors.textMuted, fontSize: 28, fontWeight: '800' }}>
               {r.time_hhmm}
             </Text>
-            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 2 }}>{r.label}</Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 2 }}>{r.label}</Text>
           </View>
-          <Switch value={r.enabled} onValueChange={() => toggle(r)} trackColor={{ true: '#00f0ff' }}/>
+          <Switch value={r.enabled} onValueChange={() => toggle(r)} trackColor={{ true: colors.primary, false: colors.surfaceRaised }}/>
         </View>
       ))}
 
       <Pressable onPress={addDefaults}
-                 style={{
-                   marginTop: 6, padding: 14, borderRadius: 14,
-                   backgroundColor: 'rgba(0,240,255,0.08)',
-                   borderWidth: 1, borderColor: 'rgba(0,240,255,0.3)',
-                   alignItems: 'center',
-                 }}>
-        <Text style={{ color: '#00f0ff', fontSize: 13, fontWeight: '700' }}>
+        accessibilityRole="button" accessibilityLabel={t('addDefaultReminders')}
+        style={({ pressed }) => ({
+          marginTop: 6, padding: 16, borderRadius: 14,
+          backgroundColor: colors.accentBg,
+          borderWidth: 1, borderColor: colors.accentBorder,
+          alignItems: 'center', opacity: pressed ? 0.85 : 1,
+        })}>
+        <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '700' }}>
           {t('addDefaultReminders')}
         </Text>
       </Pressable>
