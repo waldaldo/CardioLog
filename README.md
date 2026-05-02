@@ -2,16 +2,34 @@
 
 Aplicación móvil para registro y seguimiento de presión arterial, construida con React Native y Expo.
 
+**Diseñada con dos principios no negociables: simplicidad y privacidad.**
+Todos los datos se almacenan exclusivamente en el dispositivo. La app no tiene servidores propios, no requiere cuenta, no recopila datos de uso, no envía analíticas y no accede a internet en ningún momento. Lo que registras es tuyo y solo tuyo.
+
 ## Características
 
 - Registro de mediciones (sistólica, diastólica, pulso) con clasificación OMS en tiempo real
 - Historial agrupado por día con gráfico de tendencia
 - Promedios de 7 y 30 días con acceso al detalle de cada rango
 - Recomendaciones de estilo de vida personalizadas según presión e IMC
-- Recordatorios locales programables
-- Exportar e importar respaldo en JSON (compatible con Google Drive, correo, etc.)
+- Recordatorios locales programables (sin internet)
+- Exportar respaldo en JSON o PDF e importar desde archivo — el usuario elige dónde guardarlo
 - Perfil editable con cálculo de IMC automático
 - Tema oscuro y claro con cambio en tiempo real
+
+## Privacidad
+
+CardioLog no recopila, transmite ni almacena ningún dato personal fuera del dispositivo.
+
+| Aspecto | Detalle |
+|---|---|
+| Almacenamiento | SQLite local — los datos nunca salen del dispositivo sin acción explícita del usuario |
+| Red | La app no realiza ninguna conexión a internet en modo normal de uso |
+| Cuentas | No requiere registro ni inicio de sesión de ningún tipo |
+| Analíticas | Sin telemetría, sin seguimiento de uso, sin crashlytics |
+| Respaldo | El usuario genera el archivo y elige manualmente dónde guardarlo (Drive, correo, USB, etc.) |
+| Terceros | No se integra ningún SDK de publicidad, métricas ni redes sociales |
+
+El código es abierto y auditable.
 
 ## Stack
 
