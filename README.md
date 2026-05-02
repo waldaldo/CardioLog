@@ -11,7 +11,7 @@ Aplicación móvil para registro y seguimiento de presión arterial, construida 
 - Recordatorios locales programables
 - Exportar e importar respaldo en JSON (compatible con Google Drive, correo, etc.)
 - Perfil editable con cálculo de IMC automático
-- Tema oscuro
+- Tema oscuro y claro con cambio en tiempo real
 
 ## Stack
 
@@ -41,12 +41,69 @@ Escanea el QR con Expo Go. Para abrir en emulador Android presiona `a`.
 
 > **Nota:** las notificaciones locales no están disponibles en Expo Go (limitación del SDK 54). Funcionan en builds de desarrollo o producción generadas con EAS.
 
-### Generar APK para instalar directamente en un teléfono
+### Generar APK con EAS (nube)
 
 ```bash
 npm install -g eas-cli
 eas login
 eas build --platform android --profile preview
+```
+
+### Generar APK local con Android Studio
+
+Requisitos previos:
+
+- [Android Studio](https://developer.android.com/studio) instalado
+- SDK de Android con `ANDROID_HOME` configurado
+- Un emulador creado en Android Studio **o** un dispositivo físico con depuración USB activada
+
+1. Compilar la APK de debug:
+
+```bash
+npm install
+npx expo run:android
+```
+
+Esto compila el proyecto nativo y lo instala automáticamente en el emulador o dispositivo conectado. La APK de debug queda en:
+
+```
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+2. Generar una APK de release firmada (opcional):
+
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+La APK de release queda en:
+
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+> Si no tienes un keystore de release, puedes usar el de debug incluido en `android/app/debug.keystore` (solo para pruebas).
+
+3. Instalar via adb en un dispositivo conectado:
+
+```bash
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+> Asegúrate de que el dispositivo tenga **Depuración USB** activada (Configuración → Opciones de desarrollador) y que `adb devices` lo liste como autorizado.
+
+4. Verificar conexión del dispositivo:
+
+```bash
+adb devices
+```
+
+Debería mostrar algo como:
+
+```
+List of devices attached
+R5CR80XXXX  device
 ```
 
 ## Estructura del proyecto
