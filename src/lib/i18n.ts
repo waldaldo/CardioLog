@@ -138,6 +138,23 @@ export const I18N: Record<Lang, Record<string, string>> = {
     avgSystolic: 'Sist. promedio',
     goal: 'Meta',
     searchGoogle: 'Buscar en Google →',
+
+    // PDF Report
+    pdfReport: 'Informe PDF',
+    pdfReportDesc: 'Genera un PDF con gráfico de tendencia y tabla de historial. Compártelo por correo, WhatsApp o donde quieras.',
+    pdfExportBtn: 'Generar informe PDF',
+    pdfDone: 'Informe generado',
+    pdfDoneMsg: 'Informe con',
+    pdfAll: 'Todos',
+    pdf30d: 'Últimos 30 días',
+    pdf90d: 'Últimos 90 días',
+    pdfSharingTitle: 'Informe CardioLog',
+    reportTitle: 'Informe de presión arterial',
+    exportDate: 'Fecha de exportación',
+    historyTitle: 'Historial de mediciones',
+    date: 'Fecha',
+    time: 'Hora',
+    category: 'Clasificación',
   },
   en: {
     appName: 'CardioLog',
@@ -268,6 +285,23 @@ export const I18N: Record<Lang, Record<string, string>> = {
     avgSystolic: 'Avg systolic',
     goal: 'Goal',
     searchGoogle: 'Search Google →',
+
+    // PDF Report
+    pdfReport: 'PDF Report',
+    pdfReportDesc: 'Generate a PDF with a trend chart and history table. Share via email, WhatsApp, or anywhere.',
+    pdfExportBtn: 'Generate PDF report',
+    pdfDone: 'Report generated',
+    pdfDoneMsg: 'Report with',
+    pdfAll: 'All',
+    pdf30d: 'Last 30 days',
+    pdf90d: 'Last 90 days',
+    pdfSharingTitle: 'CardioLog Report',
+    reportTitle: 'Blood pressure report',
+    exportDate: 'Export date',
+    historyTitle: 'Measurement history',
+    date: 'Date',
+    time: 'Time',
+    category: 'Classification',
   },
 };
 

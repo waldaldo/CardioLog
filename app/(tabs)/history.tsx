@@ -1,8 +1,10 @@
-import { useCallback } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
+import { useProfile } from '@/hooks/useProfile';
 import { classifyBP } from '@/lib/oms';
+import { exportPdfReport } from '@/lib/pdfReport';
 import { AreaChart } from '@/components/AreaChart';
 import { TabFade } from '@/components/TabFade';
 import { useTheme } from '@/context/ThemeContext';
@@ -10,9 +12,23 @@ import { useLang } from '@/context/LangContext';
 
 export default function History() {
   const { readings, refresh } = useReadings();
+  const { profile } = useProfile();
   const { lang, locale, t } = useLang();
   const { colors } = useTheme();
+  const [pdfBusy, setPdfBusy] = useState(false);
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+
+  const onSharePdf = async () => {
+    if (!profile) return;
+    try {
+      setPdfBusy(true);
+      await exportPdfReport(readings, profile, lang, 'all');
+    } catch (e: any) {
+      if (e.message !== 'cancelled') Alert.alert(t('saveError'), e.message);
+    } finally {
+      setPdfBusy(false);
+    }
+  };
   const reversed = [...readings].reverse();
   const grouped: Record<string, typeof readings> = {};
   for (const r of reversed) {
@@ -29,7 +45,20 @@ export default function History() {
     <TabFade>
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 16 }}>{t('history')}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>{t('history')}</Text>
+        {readings.length > 0 && (
+          <Pressable onPress={onSharePdf} disabled={pdfBusy || !profile}
+                     style={{
+                       width: 40, height: 40, borderRadius: 12,
+                       backgroundColor: 'rgba(239,68,68,0.12)',
+                       alignItems: 'center', justifyContent: 'center',
+                       opacity: (pdfBusy || !profile) ? 0.4 : 1,
+                     }}>
+            <Text style={{ fontSize: 18 }}>↑</Text>
+          </Pressable>
+        )}
+      </View>
 
         {readings.length > 1 && (
           <View style={{

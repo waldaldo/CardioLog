@@ -2,14 +2,21 @@ import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { backupNow, pickAndReadBackup, restoreBackup, listLocalBackups, BackupFile } from '@/lib/drive';
+import { exportPdfReport, PdfPeriod } from '@/lib/pdfReport';
+import { useReadings } from '@/hooks/useReadings';
+import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 
 export default function Backup() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { colors } = useTheme();
+  const { readings } = useReadings();
+  const { profile } = useProfile();
   const [files, setFiles] = useState<BackupFile[]>([]);
   const [busy, setBusy] = useState(false);
+  const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('30d');
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const refresh = async () => {
     try {
@@ -31,6 +38,19 @@ export default function Backup() {
       Alert.alert(t('saveError'), e.message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onExportPdf = async () => {
+    if (!profile) return;
+    try {
+      setPdfBusy(true);
+      const r = await exportPdfReport(readings, profile, lang, pdfPeriod);
+      Alert.alert(t('pdfDone'), `${t('pdfDoneMsg')} ${r.count} ${t('backupDoneSuffix')}`);
+    } catch (e: any) {
+      if (e.message !== 'cancelled') Alert.alert(t('saveError'), e.message);
+    } finally {
+      setPdfBusy(false);
     }
   };
 
@@ -126,6 +146,41 @@ export default function Backup() {
                    alignItems: 'center', marginBottom: 28,
                  }}>
         <Text style={{ color: '#a78bfa', fontSize: 15, fontWeight: '800' }}>{t('importBtn')}</Text>
+      </Pressable>
+
+      {/* Informe PDF */}
+      <View style={{
+        padding: 18, borderRadius: 20,
+        backgroundColor: 'rgba(239,68,68,0.08)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
+        marginBottom: 10,
+      }}>
+        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: 6 }}>{t('pdfReport')}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>{t('pdfReportDesc')}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+        {(['all', '30d', '90d'] as PdfPeriod[]).map(p => (
+          <Pressable key={p} onPress={() => setPdfPeriod(p)}
+                     style={{
+                       flex: 1, padding: 8, borderRadius: 10, alignItems: 'center',
+                       backgroundColor: pdfPeriod === p ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.05)',
+                       borderWidth: 1, borderColor: pdfPeriod === p ? '#ef4444' : colors.glassBorder,
+                     }}>
+            <Text style={{ color: pdfPeriod === p ? '#ef4444' : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+              {t(p === 'all' ? 'pdfAll' : p === '30d' ? 'pdf30d' : 'pdf90d')}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable onPress={onExportPdf} disabled={pdfBusy || readings.length === 0 || !profile}
+                 style={{
+                   padding: 16, borderRadius: 14,
+                   backgroundColor: (pdfBusy || readings.length === 0 || !profile)
+                     ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.85)',
+                   alignItems: 'center', marginBottom: 28,
+                 }}>
+        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>
+          {pdfBusy ? t('preparing') : t('pdfExportBtn')}
+        </Text>
       </Pressable>
 
       {/* Historial local */}
