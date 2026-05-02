@@ -3,9 +3,11 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { palette } from '@/theme/tokens';
+import { useTheme } from '@/context/ThemeContext';
+import { useLang } from '@/context/LangContext';
 
 function TabIcon({ focused, label }: { focused: boolean; label: string }) {
+  const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', paddingTop: 10 }}>
       <View style={{
@@ -14,7 +16,7 @@ function TabIcon({ focused, label }: { focused: boolean; label: string }) {
         marginBottom: 6,
       }}/>
       <Text style={{
-        color: focused ? '#00f0ff' : 'rgba(255,255,255,0.55)',
+        color: focused ? '#00f0ff' : colors.textMuted,
         fontSize: 12,
         fontWeight: focused ? '700' : '500',
         letterSpacing: 0.3,
@@ -28,15 +30,17 @@ function TabIcon({ focused, label }: { focused: boolean; label: string }) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { t } = useLang();
+  const { colors } = useTheme();
   const tabBarHeight = 56 + insets.bottom;
 
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      sceneContainerStyle: { backgroundColor: palette.bgDark },
+      sceneContainerStyle: { backgroundColor: colors.bg },
       tabBarStyle: {
-        backgroundColor: palette.bgDark,
-        borderTopColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: colors.bg,
+        borderTopColor: colors.glassBorder,
         borderTopWidth: 1,
         height: tabBarHeight,
         paddingBottom: insets.bottom,
@@ -54,9 +58,9 @@ export default function TabsLayout() {
         height: '100%',
       },
     }}>
-      <Tabs.Screen name="index"   options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Inicio"/> }}/>
-      <Tabs.Screen name="history" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Historial"/> }}/>
-      <Tabs.Screen name="profile" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Perfil"/> }}/>
+    <Tabs.Screen name="index" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('home')}/> }}/>
+    <Tabs.Screen name="history" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('history')}/> }}/>
+    <Tabs.Screen name="profile" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('profile')}/> }}/>
     </Tabs>
   );
 }

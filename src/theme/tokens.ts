@@ -7,7 +7,6 @@ export const palette = {
   glassBg: 'rgba(20,20,24,0.6)',
   glassBorder: 'rgba(255,255,255,0.08)',
 
-  // Tema claro (implementación pendiente)
   bgLight: '#f5f7fb',
   bgLightElevated: '#ffffff',
   textLightPrimary: '#0f172a',
@@ -17,21 +16,56 @@ export const palette = {
   glassLightBorder: 'rgba(15,23,42,0.08)',
 };
 
+export interface ThemeColors {
+  bg: string;
+  bgElevated: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  glassBg: string;
+  glassBorder: string;
+  borderSubtle: string;
+}
+
+export function getColors(isDark: boolean): ThemeColors {
+  return isDark
+    ? {
+        bg: palette.bgDark,
+        bgElevated: palette.bgElevated,
+        text: palette.textPrimary,
+        textSecondary: palette.textSecondary,
+        textMuted: palette.textMuted,
+        glassBg: palette.glassBg,
+        glassBorder: palette.glassBorder,
+        borderSubtle: 'rgba(255,255,255,0.05)',
+      }
+    : {
+        bg: palette.bgLight,
+        bgElevated: palette.bgLightElevated,
+        text: palette.textLightPrimary,
+        textSecondary: palette.textLightSecondary,
+        textMuted: palette.textLightMuted,
+        glassBg: palette.glassLightBg,
+        glassBorder: palette.glassLightBorder,
+        borderSubtle: 'rgba(15,23,42,0.05)',
+      };
+}
+
 export const accents = {
-  cyan:    { primary: '#00f0ff', secondary: '#8a2be2' },
-  violet:  { primary: '#a78bfa', secondary: '#8a2be2' },
+  cyan: { primary: '#00f0ff', secondary: '#8a2be2' },
+  violet: { primary: '#a78bfa', secondary: '#8a2be2' },
   medical: { primary: '#10b981', secondary: '#0ea5e9' },
 } as const;
 
 export type AccentKey = keyof typeof accents;
 
 export const omsColors = {
-  optima:     '#10b981',
-  normal:     '#84cc16',
+  optima: '#10b981',
+  normal: '#84cc16',
   normalAlta: '#facc15',
-  hta1:       '#fb923c',
-  hta2:       '#ef4444',
-  hta3:       '#b91c1c',
+  hta1: '#fb923c',
+  hta2: '#ef4444',
+  hta3: '#b91c1c',
 };
 
 export const typography = {
@@ -40,9 +74,9 @@ export const typography = {
   scale: {
     normal: 1.0,
     grande: 1.15,
-    xl:     1.3,
+    xl: 1.3,
   },
 };
 
-export const spacing = (n: number) => n * 4; // unidad base de 4px
+export const spacing = (n: number) => n * 4;
 export const radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };

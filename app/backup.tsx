@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { backupNow, pickAndReadBackup, restoreBackup, listLocalBackups, BackupFile } from '@/lib/drive';
-import { palette } from '@/theme/tokens';
+import { useTheme } from '@/context/ThemeContext';
+import { useLang } from '@/context/LangContext';
 
 export default function Backup() {
+  const { t } = useLang();
+  const { colors } = useTheme();
   const [files, setFiles] = useState<BackupFile[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -23,9 +26,9 @@ export default function Backup() {
       setBusy(true);
       const r = await backupNow();
       await refresh();
-      Alert.alert('Listo', `Respaldo de ${r.count} mediciones generado.`);
+        Alert.alert(t('backupDone'), `${t('backupDoneMsg')} ${r.count} ${t('backupDoneSuffix')}`);
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('saveError'), e.message);
     } finally {
       setBusy(false);
     }
@@ -38,21 +41,21 @@ export default function Backup() {
       const count = payload.readings.length;
       const date = payload.exported_at.slice(0, 10);
 
-      Alert.alert(
-        'Restaurar respaldo',
-        `El archivo contiene ${count} mediciones exportadas el ${date}.\n\nEsto reemplazará tu perfil y todas las mediciones actuales. ¿Continuar?`,
+        Alert.alert(
+          t('restoreTitle'),
+          `${t('restoreMsgPrefix')} ${count} ${t('restoreMsgMiddle')} ${date}.\n\n${t('restoreMsgSuffix')}`,
         [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Restaurar',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                setBusy(true);
-                const r = await restoreBackup(payload);
-                Alert.alert('Listo', `Se restauraron ${r.count} mediciones correctamente.`);
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('restore'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setBusy(true);
+              const r = await restoreBackup(payload);
+              Alert.alert(t('backupDone'), `${t('restoreDone')} ${r.count} ${t('restoreDoneSuffix')}`);
               } catch (e: any) {
-                Alert.alert('Error al restaurar', e.message);
+                Alert.alert(t('restoreError'), e.message);
               } finally {
                 setBusy(false);
               }
@@ -61,22 +64,25 @@ export default function Backup() {
         ]
       );
     } catch (e: any) {
-      if (e.message !== 'Selección cancelada') {
-        Alert.alert('Error', e.message);
-      }
+      const code = e.message;
+      if (code === 'cancelled') return;
+      const msg = code === 'invalidFile' ? t('invalidFile')
+        : code === 'notBackup' ? t('notBackup')
+        : e.message;
+      Alert.alert(t('saveError'), msg);
     }
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
         <Pressable onPress={() => router.back()}
-                   style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 20 }}>←</Text>
-        </Pressable>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginLeft: 12 }}>Respaldo</Text>
+      style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: colors.text, fontSize: 20 }}>←</Text>
+    </Pressable>
+    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginLeft: 12 }}>{t('backupTitle')}</Text>
       </View>
 
       {/* Exportar */}
@@ -85,10 +91,10 @@ export default function Backup() {
         backgroundColor: 'rgba(0,240,255,0.08)', borderWidth: 1, borderColor: 'rgba(0,240,255,0.25)',
         marginBottom: 10,
       }}>
-        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 6 }}>Exportar datos</Text>
-        <Text style={{ color: palette.textSecondary, fontSize: 13, lineHeight: 20 }}>
-          Genera un archivo JSON con tus mediciones y perfil. Puedes guardarlo en Google Drive, enviarlo por correo o compartirlo donde quieras.
-        </Text>
+      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: 6 }}>{t('exportData')}</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+        {t('exportDesc')}
+      </Text>
       </View>
       <Pressable onPress={onExport} disabled={busy}
                  style={{
@@ -97,7 +103,7 @@ export default function Backup() {
                    alignItems: 'center', marginBottom: 20,
                  }}>
         <Text style={{ color: '#07070a', fontSize: 15, fontWeight: '800' }}>
-          {busy ? 'Preparando…' : 'Exportar respaldo'}
+          {busy ? t('preparing') : t('exportBtn')}
         </Text>
       </Pressable>
 
@@ -107,10 +113,10 @@ export default function Backup() {
         backgroundColor: 'rgba(167,139,250,0.08)', borderWidth: 1, borderColor: 'rgba(167,139,250,0.25)',
         marginBottom: 10,
       }}>
-        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 6 }}>Importar respaldo</Text>
-        <Text style={{ color: palette.textSecondary, fontSize: 13, lineHeight: 20 }}>
-          Restaura tus datos desde un archivo de respaldo anterior. Reemplazará las mediciones actuales.
-        </Text>
+      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: 6 }}>{t('importData')}</Text>
+      <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+        {t('importDesc')}
+      </Text>
       </View>
       <Pressable onPress={onImport} disabled={busy}
                  style={{
@@ -119,28 +125,28 @@ export default function Backup() {
                    borderWidth: 1, borderColor: 'rgba(167,139,250,0.4)',
                    alignItems: 'center', marginBottom: 28,
                  }}>
-        <Text style={{ color: '#a78bfa', fontSize: 15, fontWeight: '800' }}>Seleccionar archivo</Text>
+        <Text style={{ color: '#a78bfa', fontSize: 15, fontWeight: '800' }}>{t('importBtn')}</Text>
       </Pressable>
 
       {/* Historial local */}
-      <Text style={{ color: palette.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
-        RESPALDOS EN ESTE DISPOSITIVO
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
+        {t('localBackups')}
       </Text>
-      <View style={{ backgroundColor: palette.glassBg, borderRadius: 16, borderWidth: 1, borderColor: palette.glassBorder }}>
+      <View style={{ backgroundColor: colors.glassBg, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder }}>
         {files.length === 0 ? (
-          <Text style={{ color: palette.textMuted, padding: 16, textAlign: 'center' }}>
-            Aún no hay respaldos generados
-          </Text>
+      <Text style={{ color: colors.textMuted, padding: 16, textAlign: 'center' }}>
+        {t('noBackups')}
+      </Text>
         ) : (
           files.slice(0, 10).map((f, i) => (
             <View key={f.name} style={{
               padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
-              borderBottomWidth: i < Math.min(files.length, 10) - 1 ? 1 : 0,
-              borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomWidth: i < Math.min(files.length, 10) - 1 ? 1 : 0,
+        borderBottomColor: colors.borderSubtle,
             }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981' }}/>
-              <Text style={{ color: '#fff', flex: 1, fontSize: 12 }}>{f.name}</Text>
-              <Text style={{ color: palette.textMuted, fontSize: 11 }}>
+        <Text style={{ color: colors.text, flex: 1, fontSize: 12 }}>{f.name}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>
                 {f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('es-CL') : ''}
               </Text>
             </View>
@@ -148,6 +154,6 @@ export default function Backup() {
         )}
       </View>
 
-    </ScrollView>
-  );
-}
+      </ScrollView>
+    );
+  }

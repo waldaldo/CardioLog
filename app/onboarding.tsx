@@ -3,14 +3,15 @@ import { View, Text, Pressable, TextInput, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useProfile } from '@/hooks/useProfile';
 import { Logo } from '@/components/Logo';
-import { palette } from '@/theme/tokens';
+import { useTheme } from '@/context/ThemeContext';
+import { useLang } from '@/context/LangContext';
 
 interface Step {
-  title: string;
+  titleKey: string;
   field: 'name' | 'age' | 'sex' | 'weight' | 'height';
   kind: 'text' | 'num' | 'choice';
-  unit?: string; min?: number; max?: number;
-  options?: Array<[string, string]>;
+  unitKey?: string; min?: number; max?: number;
+  options?: Array<[string, string, string]>;
 }
 
 interface OnboardingData {
@@ -22,15 +23,17 @@ interface OnboardingData {
 }
 
 const STEPS: Step[] = [
-  { title: '¿Cómo te llamas?', field: 'name', kind: 'text' },
-  { title: '¿Cuál es tu edad?', field: 'age', kind: 'num', unit: 'años', min: 18, max: 100 },
-  { title: 'Sexo biológico', field: 'sex', kind: 'choice', options: [['M', 'Masculino'], ['F', 'Femenino']] },
-  { title: '¿Cuánto pesas?', field: 'weight', kind: 'num', unit: 'kilogramos', min: 30, max: 200 },
-  { title: '¿Cuál es tu estatura?', field: 'height', kind: 'num', unit: 'centímetros', min: 120, max: 220 },
+  { titleKey: 'onbName', field: 'name', kind: 'text' },
+  { titleKey: 'onbAge', field: 'age', kind: 'num', unitKey: 'yearsUnit', min: 18, max: 100 },
+  { titleKey: 'onbSex', field: 'sex', kind: 'choice', options: [['M', 'male', 'Masculino'], ['F', 'female', 'Femenino']] },
+  { titleKey: 'onbWeight', field: 'weight', kind: 'num', unitKey: 'kilograms', min: 30, max: 200 },
+  { titleKey: 'onbHeight', field: 'height', kind: 'num', unitKey: 'centimeters', min: 120, max: 220 },
 ];
 
 export default function Onboarding() {
   const { save } = useProfile();
+  const { t } = useLang();
+  const { colors } = useTheme();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<OnboardingData>({ name: '', age: 60, sex: 'M', weight: 80, height: 170 });
   const s = STEPS[step];
@@ -46,16 +49,20 @@ export default function Onboarding() {
       });
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('Error', 'No se pudo guardar el perfil. Intenta de nuevo.');
+      Alert.alert(t('onbError'), t('onbErrorMsg'));
     }
   };
 
+  const getOptionLabel = (opt: [string, string, string]) => {
+    return t(opt[1]) !== opt[1] ? t(opt[1]) : opt[2];
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: palette.bgDark, padding: 28 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, padding: 28 }}>
       <View style={{ paddingTop: 40 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Logo size={40}/>
-          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800' }}>CardioLog</Text>
+          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>CardioLog</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 18 }}>
           {STEPS.map((_, i) => (
@@ -69,20 +76,20 @@ export default function Onboarding() {
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text style={{ color: '#00f0ff', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 }}>
-          PASO {step + 1} DE {STEPS.length}
+          {t('stepOf')} {step + 1} {t('of')} {STEPS.length}
         </Text>
-        <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', marginBottom: 28, lineHeight: 32 }}>
-          {s.title}
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 28, lineHeight: 32 }}>
+          {t(s.titleKey)}
         </Text>
 
         {s.kind === 'text' && (
           <TextInput
             value={String(data[s.field])}
             onChangeText={v => setData({ ...data, [s.field]: v })}
-            placeholder="Tu nombre"
-            placeholderTextColor={palette.textMuted}
+            placeholder={t('placeholderName')}
+            placeholderTextColor={colors.textMuted}
             style={{
-              padding: 16, fontSize: 18, color: '#fff',
+              padding: 16, fontSize: 18, color: colors.text,
               backgroundColor: 'rgba(255,255,255,0.06)',
               borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
             }}
@@ -92,32 +99,32 @@ export default function Onboarding() {
         {s.kind === 'num' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Pressable onPress={() => setData({ ...data, [s.field]: Math.max(s.min ?? 0, (data[s.field] as number) - 1) })}
-                       style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontSize: 26 }}>–</Text>
+              style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.text, fontSize: 26 }}>–</Text>
             </Pressable>
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={{ color: '#00f0ff', fontSize: 72, fontWeight: '800', lineHeight: 72 }}>{data[s.field]}</Text>
-              <Text style={{ color: palette.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginTop: 6 }}>
-                {s.unit?.toUpperCase()}
+              <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginTop: 6 }}>
+                {s.unitKey ? t(s.unitKey).toUpperCase() : ''}
               </Text>
             </View>
             <Pressable onPress={() => setData({ ...data, [s.field]: Math.min(s.max ?? 9999, (data[s.field] as number) + 1) })}
-                       style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontSize: 26 }}>+</Text>
+              style={{ width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.text, fontSize: 26 }}>+</Text>
             </Pressable>
           </View>
         )}
 
         {s.kind === 'choice' && (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {(s.options ?? []).map(([v, l]) => (
-              <Pressable key={v} onPress={() => setData({ ...data, [s.field]: v })}
-                         style={{
-                           flex: 1, padding: 20, borderRadius: 16, alignItems: 'center',
-                           backgroundColor: data[s.field] === v ? 'rgba(0,240,255,0.15)' : 'rgba(255,255,255,0.04)',
-                           borderWidth: 1, borderColor: data[s.field] === v ? '#00f0ff' : 'rgba(255,255,255,0.08)',
-                         }}>
-                <Text style={{ color: data[s.field] === v ? '#00f0ff' : '#fff', fontSize: 16, fontWeight: '700' }}>{l}</Text>
+            {(s.options ?? []).map(opt => (
+              <Pressable key={opt[0]} onPress={() => setData({ ...data, [s.field]: opt[0] })}
+                style={{
+                  flex: 1, padding: 20, borderRadius: 16, alignItems: 'center',
+                  backgroundColor: data[s.field] === opt[0] ? 'rgba(0,240,255,0.15)' : 'rgba(255,255,255,0.04)',
+                  borderWidth: 1, borderColor: data[s.field] === opt[0] ? '#00f0ff' : 'rgba(255,255,255,0.08)',
+                }}>
+                <Text style={{ color: data[s.field] === opt[0] ? '#00f0ff' : colors.text, fontSize: 16, fontWeight: '700' }}>{getOptionLabel(opt)}</Text>
               </Pressable>
             ))}
           </View>
@@ -125,9 +132,9 @@ export default function Onboarding() {
       </View>
 
       <Pressable onPress={next}
-                 style={{ padding: 18, borderRadius: 16, backgroundColor: '#00f0ff', alignItems: 'center' }}>
+        style={{ padding: 18, borderRadius: 16, backgroundColor: '#00f0ff', alignItems: 'center' }}>
         <Text style={{ color: '#07070a', fontSize: 16, fontWeight: '800' }}>
-          {step < STEPS.length - 1 ? 'Continuar' : 'Comenzar'}
+          {step < STEPS.length - 1 ? t('continue') : t('start')}
         </Text>
       </Pressable>
     </View>

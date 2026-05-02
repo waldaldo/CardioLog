@@ -5,9 +5,12 @@ import { View, Text, Pressable, Switch, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { listReminders, upsertReminder, Reminder } from '@/db/repositories';
 import { scheduleReminder, cancelReminder } from '@/lib/notifications';
-import { palette } from '@/theme/tokens';
+import { useTheme } from '@/context/ThemeContext';
+import { useLang } from '@/context/LangContext';
 
 export default function Reminders() {
+  const { t } = useLang();
+  const { colors } = useTheme();
   const [items, setItems] = useState<Reminder[]>([]);
   const refresh = useCallback(async () => setItems(await listReminders()), []);
   useEffect(() => { refresh(); }, [refresh]);
@@ -22,41 +25,41 @@ export default function Reminders() {
       }
       await refresh();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('saveError'), e.message);
     }
   };
 
   const addDefaults = async () => {
     try {
-      await scheduleReminder({ timeHHMM: '08:00', label: 'Medición matinal' });
-      await scheduleReminder({ timeHHMM: '21:00', label: 'Medición nocturna' });
+      await scheduleReminder({ timeHHMM: '08:00', label: t('morningMeasurement') });
+      await scheduleReminder({ timeHHMM: '21:00', label: t('eveningMeasurement') });
       await refresh();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('saveError'), e.message);
     }
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: palette.bgDark }}
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
         <Pressable onPress={() => router.back()}
-                   style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 20 }}>←</Text>
-        </Pressable>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginLeft: 12 }}>Recordatorios</Text>
+      style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: colors.text, fontSize: 20 }}>←</Text>
+    </Pressable>
+    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginLeft: 12 }}>{t('reminders')}</Text>
       </View>
 
       {items.map(r => (
         <View key={r.id} style={{
-          padding: 16, marginBottom: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center',
-          backgroundColor: palette.glassBg, borderWidth: 1, borderColor: palette.glassBorder,
+      padding: 16, marginBottom: 10, borderRadius: 16, flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.glassBg, borderWidth: 1, borderColor: colors.glassBorder,
         }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: r.enabled ? '#00f0ff' : palette.textMuted, fontSize: 28, fontWeight: '800' }}>
+            <Text style={{ color: r.enabled ? '#00f0ff' : colors.textMuted, fontSize: 28, fontWeight: '800' }}>
               {r.time_hhmm}
             </Text>
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', marginTop: 2 }}>{r.label}</Text>
+            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 2 }}>{r.label}</Text>
           </View>
           <Switch value={r.enabled} onValueChange={() => toggle(r)} trackColor={{ true: '#00f0ff' }}/>
         </View>
@@ -70,7 +73,7 @@ export default function Reminders() {
                    alignItems: 'center',
                  }}>
         <Text style={{ color: '#00f0ff', fontSize: 13, fontWeight: '700' }}>
-          + Agregar recordatorios por defecto (8:00 y 21:00)
+          {t('addDefaultReminders')}
         </Text>
       </Pressable>
     </ScrollView>

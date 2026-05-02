@@ -7,29 +7,33 @@ import Animated, {
   FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
-import { ThemeProvider, DarkTheme } from '@react-navigation/native';
+import { ThemeProvider as NavThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { getDb } from '@/db/client';
 import { getProfile } from '@/db/repositories';
 import { syncAllFromDb } from '@/lib/notifications';
 import { Logo } from '@/components/Logo';
 import { palette } from '@/theme/tokens';
+import { LangProvider } from '@/context/LangContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-const customDarkTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: palette.bgDark,
-  },
-};
+function ThemedNav({ children }: { children: React.ReactNode }) {
+  const { isDark, colors } = useTheme();
+  const navTheme = isDark
+    ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: colors.bg } }
+    : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.bg } };
 
-// Overlay animado que se muestra mientras carga la BD.
-// Coincide con el splash nativo para una transición imperceptible.
+  return (
+    <NavThemeProvider value={navTheme}>
+      {children}
+    </NavThemeProvider>
+  );
+}
+
 function LoadingOverlay() {
   const opacity = useSharedValue(1);
 
-  // Pulso suave en el punto de carga
   const dotOpacity = useSharedValue(0.3);
   useEffect(() => {
     dotOpacity.value = withRepeat(
@@ -70,14 +74,14 @@ function LoadingOverlay() {
   );
 }
 
-export default function RootLayout() {
+function AppContent() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [ready, setReady] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fase 1: inicializa la BD y determina si el usuario ya completó el onboarding.
   useEffect(() => {
     (async () => {
       try {
@@ -94,16 +98,12 @@ export default function RootLayout() {
     })();
   }, []);
 
-  // Fase 2: navega a onboarding SOLO después de que el Stack esté montado.
-  // Si se hace la redirección dentro de la Fase 1 (antes del primer render),
-  // Expo Router no tiene el árbol de navegación listo y lanza un error.
   useEffect(() => {
     if (ready && !hasProfile) {
       router.replace('/onboarding');
     }
   }, [ready, hasProfile]);
 
-  // Fase 3: pequeña pausa para que el FadeOut del overlay se vea completo.
   useEffect(() => {
     if (ready) {
       const t = setTimeout(() => setShowOverlay(false), 150);
@@ -121,28 +121,36 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={customDarkTheme}>
-      <View style={{ flex: 1, backgroundColor: palette.bgDark }}>
-        <StatusBar style="light"/>
-        <Stack screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: palette.bgDark, paddingTop: insets.top },
-          sceneContainerStyle: { backgroundColor: palette.bgDark },
-          animation: 'slide_from_right',
-        }}>
-          <Stack.Screen name="(tabs)"/>
-          <Stack.Screen name="onboarding" options={{ animation: 'fade' }}/>
-          <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
-          <Stack.Screen name="recommendations"/>
-          <Stack.Screen name="reminders"/>
-          <Stack.Screen name="backup"/>
-          <Stack.Screen name="settings"/>
-          <Stack.Screen name="readings-detail"/>
-        </Stack>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar style={isDark ? 'light' : 'dark'}/>
+      <Stack screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.bg, paddingTop: insets.top },
+        animation: 'slide_from_right',
+      }}>
+        <Stack.Screen name="(tabs)"/>
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }}/>
+        <Stack.Screen name="record" options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+        <Stack.Screen name="recommendations"/>
+        <Stack.Screen name="reminders"/>
+        <Stack.Screen name="backup"/>
+        <Stack.Screen name="settings"/>
+        <Stack.Screen name="readings-detail"/>
+      </Stack>
 
-        {/* El overlay se renderiza encima del Stack y se desvanece al terminar la carga */}
-        {showOverlay && <LoadingOverlay />}
-      </View>
+      {showOverlay && <LoadingOverlay />}
+    </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <LangProvider>
+        <ThemedNav>
+          <AppContent />
+        </ThemedNav>
+      </LangProvider>
     </ThemeProvider>
   );
 }

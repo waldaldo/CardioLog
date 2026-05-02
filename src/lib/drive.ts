@@ -59,7 +59,7 @@ export async function pickAndReadBackup(): Promise<BackupPayload> {
   });
 
   if (result.canceled || !result.assets?.[0]) {
-    throw new Error('Selección cancelada');
+    throw new Error('cancelled');
   }
 
   const raw = await FileSystem.readAsStringAsync(result.assets[0].uri);
@@ -67,11 +67,11 @@ export async function pickAndReadBackup(): Promise<BackupPayload> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error('El archivo no es un JSON válido.');
+    throw new Error('invalidFile');
   }
 
   if (!parsed.profile || !Array.isArray(parsed.readings)) {
-    throw new Error('El archivo no es un respaldo de CardioLog.');
+    throw new Error('notBackup');
   }
 
   return parsed as BackupPayload;
