@@ -6,6 +6,8 @@ import { daysAgo, avg } from '@/lib/i18n';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SummaryChart } from '@/components/SummaryChart';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function ReadingsDetail() {
   const { days } = useLocalSearchParams<{ days: string }>();
@@ -36,6 +38,19 @@ export default function ReadingsDetail() {
 
       {filtered.length > 0 ? (
         <>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{
+              padding: 16, borderRadius: 20, backgroundColor: colors.bgCard,
+              borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+              alignItems: 'center'
+            }}>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginBottom: 12, alignSelf: 'flex-start' }}>
+              {t('trendZones')}
+            </Text>
+            <SummaryChart readings={filtered} width={330} />
+          </Animated.View>
+
           <View style={{
             padding: 16, borderRadius: 16, flexDirection: 'row',
             backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border, marginBottom: 16,

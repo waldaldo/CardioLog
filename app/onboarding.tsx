@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, Pressable, TextInput, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { useProfile } from '@/hooks/useProfile';
 import { Logo } from '@/components/Logo';
@@ -8,8 +8,8 @@ import { useLang } from '@/context/LangContext';
 
 interface Step {
   titleKey: string;
-  field: 'name' | 'age' | 'sex' | 'weight' | 'height';
-  kind: 'text' | 'num' | 'choice';
+  field: 'name' | 'age' | 'sex' | 'weight' | 'height' | 'theme';
+  kind: 'text' | 'num' | 'choice' | 'theme-choice';
   unitKey?: string; min?: number; max?: number;
   options?: Array<[string, string, string]>;
 }
@@ -20,9 +20,11 @@ interface OnboardingData {
   sex: string;
   weight: number;
   height: number;
+  theme: 'light' | 'dark';
 }
 
 const STEPS: Step[] = [
+  { titleKey: 'onbTheme', field: 'theme', kind: 'theme-choice' },
   { titleKey: 'onbName', field: 'name', kind: 'text' },
   { titleKey: 'onbAge', field: 'age', kind: 'num', unitKey: 'yearsUnit', min: 18, max: 100 },
   { titleKey: 'onbSex', field: 'sex', kind: 'choice', options: [['M', 'male', 'Masculino'], ['F', 'female', 'Femenino']] },
@@ -33,9 +35,16 @@ const STEPS: Step[] = [
 export default function Onboarding() {
   const { save } = useProfile();
   const { t } = useLang();
-  const { colors } = useTheme();
+  const { colors, setTheme, isDark } = useTheme();
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<OnboardingData>({ name: '', age: 60, sex: 'M', weight: 80, height: 170 });
+  const [data, setData] = useState<OnboardingData>({
+    name: '',
+    age: 60,
+    sex: 'M',
+    weight: 80,
+    height: 170,
+    theme: isDark ? 'dark' : 'light'
+  });
   const s = STEPS[step];
 
   const next = async () => {
@@ -53,13 +62,22 @@ export default function Onboarding() {
     }
   };
 
+  const updateTheme = (theme: 'light' | 'dark') => {
+    setData({ ...data, theme });
+    setTheme(theme === 'dark');
+  };
+
   const getOptionLabel = (opt: [string, string, string]) => {
     return t(opt[1]) !== opt[1] ? t(opt[1]) : opt[2];
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, padding: 28 }}>
-      <View style={{ paddingTop: 40 }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ flexGrow: 1, padding: 28, paddingBottom: 50 }}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={{ paddingTop: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Logo size={44}/>
           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>CardioLog</Text>
@@ -76,13 +94,37 @@ export default function Onboarding() {
         </View>
       </View>
 
-      <View style={{ flex: 1, justifyContent: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', marginVertical: 32 }}>
         <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 }}>
           {t('stepOf')} {step + 1} {t('of')} {STEPS.length}
         </Text>
         <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '800', marginBottom: 28, lineHeight: 32 }}>
           {t(s.titleKey)}
         </Text>
+
+        {s.kind === 'theme-choice' && (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {(['light', 'dark'] as const).map(th => {
+              const active = data.theme === th;
+              return (
+                <Pressable key={th} onPress={() => updateTheme(th)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active }}
+                  style={({ pressed }) => ({
+                    flex: 1, padding: 22, borderRadius: 16, alignItems: 'center',
+                    backgroundColor: active ? colors.accentBgStrong : colors.bgCard,
+                    borderWidth: 1.5, borderColor: active ? colors.primary : colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  })}>
+                  <Text style={{ fontSize: 32, marginBottom: 8 }}>{th === 'dark' ? '🌙' : '☀️'}</Text>
+                  <Text style={{ color: active ? colors.primary : colors.text, fontSize: 16, fontWeight: '700' }}>
+                    {t(th)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {s.kind === 'text' && (
           <TextInput
@@ -91,6 +133,7 @@ export default function Onboarding() {
             placeholder={t('placeholderName')}
             placeholderTextColor={colors.textMuted}
             accessibilityLabel={t(s.titleKey)}
+            autoFocus
             style={{
               padding: 16, fontSize: 18, color: colors.text,
               backgroundColor: colors.bgCard,
@@ -150,6 +193,6 @@ export default function Onboarding() {
           {step < STEPS.length - 1 ? t('continue') : t('start')}
         </Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }

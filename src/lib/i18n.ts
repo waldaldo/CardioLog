@@ -31,6 +31,17 @@ export const I18N: Record<Lang, Record<string, string>> = {
     reminders: 'Recordatorios',
     backup: 'Respaldo',
     settings: 'Ajustes',
+    about: 'Acerca de',
+    madeWith: 'Hecho con',
+    byWalo: 'por Walo',
+    buyMeACoffee: 'Apoyar el proyecto (Coffee)',
+    swipeToViewDetail: 'Desliza sobre el gráfico para ver detalles',
+    notes: 'Notas',
+    notesPlaceholder: '¿Algún síntoma o actividad?',
+    howToMeasure: '¿Cómo medir correctamente?',
+    tip1: 'Reposa sentado 5 min sin cruzar las piernas.',
+    tip2: 'Coloca el brazalete a la altura del corazón.',
+    tip3: 'No hables ni uses el celular durante la toma.',
 
     // Home
     last14Days: 'Últimos 14 días',
@@ -55,7 +66,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     invalidDataMsg: 'Revisa que peso, talla y edad sean valores correctos.',
     recommendationsNav: 'Recomendaciones',
     remindersNav: 'Recordatorios',
-    backupNav: 'Respaldo en Google Drive',
+    backupNav: 'Respaldar o exportar',
     settingsNav: 'Ajustes',
 
     // Record
@@ -79,6 +90,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     placeholderName: 'Tu nombre',
     onbError: 'Error',
     onbErrorMsg: 'No se pudo guardar el perfil. Intenta de nuevo.',
+    onbTheme: 'Elige tu tema preferido',
 
     // Settings
     language: 'Idioma',
@@ -188,6 +200,17 @@ export const I18N: Record<Lang, Record<string, string>> = {
     reminders: 'Reminders',
     backup: 'Backup',
     settings: 'Settings',
+    about: 'About',
+    madeWith: 'Made with',
+    byWalo: 'by Walo',
+    buyMeACoffee: 'Support the project (Coffee)',
+    swipeToViewDetail: 'Swipe over the chart to view details',
+    notes: 'Notes',
+    notesPlaceholder: 'Any symptoms or activities?',
+    howToMeasure: 'How to measure correctly?',
+    tip1: 'Rest seated for 5 min without crossing legs.',
+    tip2: 'Place the cuff at heart level.',
+    tip3: 'Do not talk or use your phone while measuring.',
 
     last14Days: 'Last 14 days',
 
@@ -209,7 +232,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     invalidDataMsg: 'Check that weight, height and age are correct.',
     recommendationsNav: 'Recommendations',
     remindersNav: 'Reminders',
-    backupNav: 'Google Drive backup',
+    backupNav: 'Backup or export',
     settingsNav: 'Settings',
 
     recordTitle: 'Log a reading',
@@ -231,6 +254,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     placeholderName: 'Your name',
     onbError: 'Error',
     onbErrorMsg: 'Could not save profile. Please try again.',
+    onbTheme: 'Choose your preferred theme',
 
     language: 'Language',
     spanish: 'Español',

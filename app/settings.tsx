@@ -70,6 +70,27 @@ export default function Settings() {
         <StaticRow label={t('version')} value="1.0.0"/>
       </View>
 
+      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 24, marginBottom: 12 }}>{t('about')}</Text>
+      <View style={{ backgroundColor: colors.bgCard, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{t('madeWith')} </Text>
+          <Text style={{ fontSize: 16 }}>❤️</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}> {t('byWalo')}</Text>
+        </View>
+
+        <Pressable
+          onPress={() => Alert.alert('Coming soon', 'Enlace a Buy me a coffee próximamente')}
+          style={({ pressed }) => ({
+            backgroundColor: '#FFDD00',
+            padding: 12, borderRadius: 12,
+            alignItems: 'center',
+            opacity: pressed ? 0.8 : 1,
+            marginTop: 8
+          })}>
+          <Text style={{ color: '#000000', fontWeight: '800', fontSize: 13 }}>☕ {t('buyMeACoffee')}</Text>
+        </Pressable>
+      </View>
+
       <Pressable onPress={onReset}
         accessibilityRole="button" accessibilityLabel={t('resetData')}
         style={({ pressed }) => ({

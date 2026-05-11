@@ -37,3 +37,6 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Skills (Custom AI agent skills)
+skills/

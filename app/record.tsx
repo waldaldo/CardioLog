@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
 import { classifyBP, omsColorFor } from '@/lib/oms';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RecordScreen() {
   const { add } = useReadings();
@@ -14,9 +15,16 @@ export default function RecordScreen() {
   const [sys, setSys] = useState(132);
   const [dia, setDia] = useState(84);
   const [pulse, setPulse] = useState(74);
+  const [note, setNote] = useState('');
   const [moment, setMoment] = useState<'morning' | 'afternoon' | 'evening'>('morning');
   const cat = classifyBP(sys, dia);
   const catColor = omsColorFor(cat.id, isDark);
+
+  const momentIcons: Record<string, string> = {
+    morning: '☀️',
+    afternoon: '⛅',
+    evening: '🌙',
+  };
 
   const momentLabels: Record<string, string> = {
     morning: t('morning'),
@@ -28,7 +36,7 @@ export default function RecordScreen() {
     try {
       await add({
         ts: new Date().toISOString(),
-        sys, dia, pulse, moment, note: '',
+        sys, dia, pulse, moment, note,
       });
       router.back();
     } catch (e: any) {
@@ -59,7 +67,10 @@ export default function RecordScreen() {
       <Stepper label={t('diastolic')} unit={t('mmHg')} value={dia} setValue={setDia} min={40} max={140} accent={colors.secondary}/>
       <Stepper label={t('pulse')} unit={t('bpm')} value={pulse} setValue={setPulse} min={30} max={200} accent={colors.oms.hta2}/>
 
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, marginBottom: 20 }}>
+      <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 8, marginTop: 8 }}>
+        {t('morning').toUpperCase()} / {t('afternoon').toUpperCase()} / {t('evening').toUpperCase()}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
         {(['morning', 'afternoon', 'evening'] as const).map(m => {
           const active = moment === m;
           return (
@@ -68,14 +79,15 @@ export default function RecordScreen() {
               accessibilityState={{ selected: active }}
               accessibilityLabel={momentLabels[m]}
               style={({ pressed }) => ({
-                flex: 1, paddingVertical: 14, paddingHorizontal: 8, borderRadius: 14, alignItems: 'center',
-                backgroundColor: active ? colors.accentBgStrong : colors.surfaceSubtle,
+                flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: 'center',
+                backgroundColor: active ? colors.accentBgStrong : colors.bgCard,
                 borderWidth: 1, borderColor: active ? colors.primary : colors.border,
                 opacity: pressed ? 0.85 : 1,
               })}>
+              <Text style={{ fontSize: 20, marginBottom: 2 }}>{momentIcons[m]}</Text>
               <Text style={{
-                color: active ? colors.primary : colors.text,
-                fontWeight: active ? '800' : '600', fontSize: 13,
+                color: active ? colors.primary : colors.textMuted,
+                fontWeight: active ? '800' : '600', fontSize: 11,
               }}>
                 {momentLabels[m]}
               </Text>
@@ -83,6 +95,36 @@ export default function RecordScreen() {
           );
         })}
       </View>
+
+      <View style={{
+        padding: 16, borderRadius: 16, marginBottom: 20,
+        backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
+      }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{t('notes')}</Text>
+        <TextInput
+          placeholder={t('notesPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          value={note}
+          onChangeText={setNote}
+          multiline
+          style={{
+            color: colors.text, fontSize: 14, minHeight: 60, textAlignVertical: 'top',
+          }}
+        />
+      </View>
+
+      <Animated.View
+        entering={FadeInDown.delay(200)}
+        style={{
+          padding: 16, borderRadius: 16, marginBottom: 24,
+          backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.border,
+          borderStyle: 'dashed',
+        }}>
+        <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800', marginBottom: 10 }}>💡 {t('howToMeasure')}</Text>
+        <Tip text={t('tip1')}/>
+        <Tip text={t('tip2')}/>
+        <Tip text={t('tip3')}/>
+      </Animated.View>
 
       <Pressable onPress={save}
         accessibilityRole="button"
@@ -96,6 +138,16 @@ export default function RecordScreen() {
         <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '800' }}>{t('save')}</Text>
       </Pressable>
     </ScrollView>
+  );
+}
+
+function Tip({ text }: { text: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary, marginTop: 7 }}/>
+      <Text style={{ color: colors.textSecondary, fontSize: 13, flex: 1, lineHeight: 18 }}>{text}</Text>
+    </View>
   );
 }
 

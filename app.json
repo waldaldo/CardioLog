@@ -8,7 +8,7 @@
     "scheme": "cardiolog",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#07070a",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
@@ -54,7 +54,8 @@
         }
       ],
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-localization"
     ],
     "extra": {
       "eas": {

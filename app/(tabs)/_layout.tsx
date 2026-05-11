@@ -10,11 +10,6 @@ function TabIcon({ focused, label }: { focused: boolean; label: string }) {
   const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', paddingTop: 10 }}>
-      <View style={{
-        width: 28, height: 3, borderRadius: 2,
-        backgroundColor: focused ? '#00f0ff' : 'transparent',
-        marginBottom: 6,
-      }}/>
       <Text style={{
         color: focused ? '#00f0ff' : colors.textMuted,
         fontSize: 12,
@@ -24,6 +19,11 @@ function TabIcon({ focused, label }: { focused: boolean; label: string }) {
       }}>
         {label}
       </Text>
+      <View style={{
+        width: 28, height: 3, borderRadius: 2,
+        backgroundColor: focused ? '#00f0ff' : 'transparent',
+        marginTop: 6,
+      }}/>
     </View>
   );
 }

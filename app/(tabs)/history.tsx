@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useReadings } from '@/hooks/useReadings';
 import { useProfile } from '@/hooks/useProfile';
 import { classifyBP, omsColorFor } from '@/lib/oms';
@@ -68,15 +69,17 @@ export default function History() {
         </View>
 
         {readings.length > 1 && (
-          <View style={{
-            padding: 16, borderRadius: 20, marginBottom: 16,
-            backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
-          }}>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{
+              padding: 16, borderRadius: 20, marginBottom: 16,
+              backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
+            }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
               {t('trendZones')}
             </Text>
             <AreaChart readings={readings} width={320} height={180}/>
-          </View>
+          </Animated.View>
         )}
 
         {hiddenDaysCount > 0 && (
@@ -84,8 +87,11 @@ export default function History() {
             {t('showingLast')} · {hiddenDaysCount} {t('olderHidden')}
           </Text>
         )}
-        {visibleDays.map(([day, rows]) => (
-          <View key={day} style={{ marginBottom: 16 }}>
+        {visibleDays.map(([day, rows], index) => (
+          <Animated.View
+            key={day}
+            entering={FadeInDown.delay(index * 100).duration(400)}
+            style={{ marginBottom: 16 }}>
             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 }}>
               {day.toUpperCase()}
             </Text>
@@ -113,13 +119,14 @@ export default function History() {
                       </View>
                       <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                         {time} · {r.pulse} {t('bpm')} · {cat.label[lang]}
+                        {r.note ? ` · ${r.note}` : ''}
                       </Text>
                     </View>
                   </View>
                 );
               })}
             </View>
-          </View>
+          </Animated.View>
         ))}
 
         {readings.length === 0 && (

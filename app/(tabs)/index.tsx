@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
 import { useReadings } from '@/hooks/useReadings';
 import { useProfile } from '@/hooks/useProfile';
 import { classifyBP, bmiOf, omsColorFor } from '@/lib/oms';
@@ -45,7 +46,8 @@ export default function HomeScreen() {
         </View>
 
         {latest && cat && (
-          <View
+          <Animated.View
+            entering={FadeInUp.duration(600)}
             accessibilityRole="summary"
             accessibilityLabel={`${t('lastReading')}: ${latest.sys} sobre ${latest.dia} ${t('mmHg')}, ${cat.label[lang]}, pulso ${latest.pulse}`}
             style={{
@@ -66,7 +68,12 @@ export default function HomeScreen() {
             <Text style={{ color: catColor, fontSize: 14, fontWeight: '700', marginTop: 6 }}>
               {cat.label[lang]} · {latest.pulse} {t('bpm')}
             </Text>
-          </View>
+            {latest.note ? (
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 10, fontStyle: 'italic' }}>
+                " {latest.note} "
+              </Text>
+            ) : null}
+          </Animated.View>
         )}
 
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
@@ -77,14 +84,16 @@ export default function HomeScreen() {
         </View>
 
         {readings.length > 1 && (
-          <View style={{
+          <Animated.View
+            entering={FadeInRight.delay(200).duration(500)}
+            style={{
             padding: 16, borderRadius: 20,
             backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
             marginBottom: 12,
           }}>
             <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginBottom: 8 }}>{t('last14Days')}</Text>
             <AreaChart readings={readings.slice(-14)} width={320} height={160}/>
-          </View>
+          </Animated.View>
         )}
 
         <Pressable
