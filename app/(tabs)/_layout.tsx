@@ -37,7 +37,6 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      sceneContainerStyle: { backgroundColor: colors.bg },
       tabBarStyle: {
         backgroundColor: colors.bg,
         borderTopColor: colors.glassBorder,
@@ -59,7 +58,6 @@ export default function TabsLayout() {
       },
     }}>
     <Tabs.Screen name="index" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('home')}/> }}/>
-    <Tabs.Screen name="history" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('history')}/> }}/>
     <Tabs.Screen name="profile" options={{ tabBarIcon: ({ focused }) => <TabIcon focused={focused} label={t('profile')}/> }}/>
     </Tabs>
   );

@@ -17,28 +17,61 @@ export interface BackupPayload {
   exported_at: string;
   profile: Profile;
   readings: Reading[];
+  encrypted?: boolean;
 }
 
-// Genera el JSON, lo escribe en cacheDirectory (siempre existe) y abre el menú de compartir.
-// El usuario elige dónde guardarlo (Google Drive, correo, etc.) sin OAuth.
-export async function backupNow(): Promise<{ count: number }> {
+function xorEncrypt(data: string, key: string): string {
+  const result: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    result.push(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return String.fromCharCode(...result);
+}
+
+function toBase64(str: string): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const bytes: number[] = [];
+  for (let i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i));
+  let result = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i], b1 = bytes[i + 1] ?? 0, b2 = bytes[i + 2] ?? 0;
+    result += chars[b0 >> 2] + chars[((b0 & 3) << 4) | (b1 >> 4)] + (i + 1 < bytes.length ? chars[((b1 & 15) << 2) | (b2 >> 6)] : '=') + (i + 2 < bytes.length ? chars[b2 & 63] : '=');
+  }
+  return result;
+}
+
+function fromBase64(b64: string): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = b64.replace(/[^A-Za-z0-9+/=]/g, '');
+  const bytes: number[] = [];
+  for (let i = 0; i < clean.length; i += 4) {
+    const e0 = chars.indexOf(clean[i]), e1 = chars.indexOf(clean[i + 1] ?? '=');
+    const e2 = chars.indexOf(clean[i + 2] ?? '='), e3 = chars.indexOf(clean[i + 3] ?? '=');
+    bytes.push((e0 << 2) | (e1 >> 4), ((e1 & 15) << 4) | (e2 >> 2), ((e2 & 3) << 6) | e3);
+  }
+  return String.fromCharCode(...bytes.slice(0, -1));
+}
+
+export async function backupNow(encrypted = false, password = ''): Promise<{ count: number }> {
   const profile = await getProfile();
   const readings = await listReadings(10000);
 
-  const payload: BackupPayload = {
-    version: 1,
-    exported_at: new Date().toISOString(),
-    profile: profile!,
-    readings,
-  };
+  let json = JSON.stringify({ version: 1, exported_at: new Date().toISOString(), profile, readings });
+  let finalJson = json;
 
-  const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  if (encrypted && password) {
+    const key = password.repeat(16).slice(0, 16);
+    finalJson = JSON.stringify({
+      encrypted: true,
+      data: toBase64(xorEncrypt(json, key)),
+    });
+  }
 
-  // cacheDirectory siempre existe — no necesita makeDirectoryAsync
+  const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}${encrypted ? '-encrypted' : ''}.json`;
+
   const cacheUri = FileSystem.cacheDirectory + filename;
-  await FileSystem.writeAsStringAsync(cacheUri, JSON.stringify(payload, null, 2));
+  await FileSystem.writeAsStringAsync(cacheUri, finalJson);
 
-  // Copia al documentDirectory para persistir en la lista de respaldos locales
   const docUri = FileSystem.documentDirectory + filename;
   await FileSystem.copyAsync({ from: cacheUri, to: docUri });
 
@@ -52,7 +85,8 @@ export async function backupNow(): Promise<{ count: number }> {
 }
 
 // Abre el selector de archivos, lee el JSON y devuelve el contenido validado.
-export async function pickAndReadBackup(): Promise<BackupPayload> {
+// Si está cifrado con XOR+Base64, el usuario debe proporcionar la contraseña.
+export async function pickAndReadBackup(password = ''): Promise<BackupPayload> {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'application/json',
     copyToCacheDirectory: true,
@@ -68,6 +102,23 @@ export async function pickAndReadBackup(): Promise<BackupPayload> {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error('invalidFile');
+  }
+
+  if (!parsed.profile && !parsed.readings && !parsed.encrypted) {
+    throw new Error('notBackup');
+  }
+
+  if (parsed.encrypted) {
+    if (!password) {
+      throw new Error('passwordRequired');
+    }
+    const key = password.repeat(16).slice(0, 16);
+    const decrypted = xorEncrypt(fromBase64(parsed.data), key);
+    try {
+      parsed = JSON.parse(decrypted);
+    } catch {
+      throw new Error('wrongPassword');
+    }
   }
 
   if (!parsed.profile || !Array.isArray(parsed.readings)) {

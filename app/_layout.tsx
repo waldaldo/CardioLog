@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as NavThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { getDb } from '@/db/client';
-import { getProfile } from '@/db/repositories';
+import { getProfile, getSetting } from '@/db/repositories';
+import { listReadings, clearAllReadings } from '@/db/repositories';
 import { syncAllFromDb } from '@/lib/notifications';
 import { SplashOverlay } from '@/components/SplashOverlay';
 import { LangProvider } from '@/context/LangContext';
@@ -34,6 +35,25 @@ function AppContent() {
   const [hasProfile, setHasProfile] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [locked, setLocked] = useState(false);
+
+  const applyAutoDelete = async () => {
+    try {
+      const months = await getSetting('autoDeleteMonths');
+      if (!months) return;
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - parseInt(months, 10));
+      const cutoffISO = cutoff.toISOString();
+      const all = await listReadings(10000);
+      const toDelete = all.filter(r => r.ts < cutoffISO);
+      if (toDelete.length > 0) {
+        for (const r of toDelete) {
+          const { deleteReading } = await import('@/db/repositories');
+          await deleteReading(r.id);
+        }
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     (async () => {
@@ -41,7 +61,10 @@ function AppContent() {
         await getDb();
         const profile = await getProfile();
         await syncAllFromDb();
+        await applyAutoDelete();
         setHasProfile(!!profile);
+        const lockPin = await getSetting('lockPin');
+        setLocked(!!lockPin);
         setReady(true);
       } catch (e: any) {
         setError(e);
@@ -54,12 +77,19 @@ function AppContent() {
   useEffect(() => {
     if (ready && !hasProfile) {
       router.replace('/onboarding');
+    } else if (ready && hasProfile && !locked) {
+      // normal flow to tabs
     }
-  }, [ready, hasProfile]);
+  }, [ready, hasProfile, locked]);
+
+  useEffect(() => {
+    if (ready && hasProfile && locked) {
+      router.replace('/lock');
+    }
+  }, [ready, hasProfile, locked]);
 
   useEffect(() => {
     if (ready) {
-      // Mantén el splash al menos 900ms para apreciar el latido + halo
       const t = setTimeout(() => setShowOverlay(false), 900);
       return () => clearTimeout(t);
     }
@@ -96,6 +126,8 @@ function AppContent() {
         <Stack.Screen name="reminders"/>
         <Stack.Screen name="backup"/>
         <Stack.Screen name="settings"/>
+        <Stack.Screen name="lock" options={{ animation: 'fade' }}/>
+        <Stack.Screen name="set-pin" options={{ animation: 'slide_from_bottom' }}/>
         <Stack.Screen name="readings-detail"/>
       </Stack>
 

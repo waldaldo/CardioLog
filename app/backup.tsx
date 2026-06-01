@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, TextInput } from 'react-native';
 import { backupNow, pickAndReadBackup, restoreBackup, listLocalBackups, BackupFile } from '@/lib/drive';
 import { exportPdfReport, PdfPeriod } from '@/lib/pdfReport';
 import { useReadings } from '@/hooks/useReadings';
@@ -17,6 +17,8 @@ export default function Backup() {
   const [busy, setBusy] = useState(false);
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('30d');
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [encryptEnabled, setEncryptEnabled] = useState(false);
+  const [password, setPassword] = useState('');
 
   const refresh = async () => {
     try {
@@ -29,9 +31,13 @@ export default function Backup() {
   useEffect(() => { refresh(); }, []);
 
   const onExport = async () => {
+    if (encryptEnabled && !password) {
+      Alert.alert(t('passwordRequiredTitle'), t('passwordRequiredBody'));
+      return;
+    }
     try {
       setBusy(true);
-      const r = await backupNow();
+      const r = await backupNow(encryptEnabled, password);
       await refresh();
       Alert.alert(t('backupDone'), `${t('backupDoneMsg')} ${r.count} ${t('backupDoneSuffix')}`);
     } catch (e: any) {
@@ -56,7 +62,7 @@ export default function Backup() {
 
   const onImport = async () => {
     try {
-      const payload = await pickAndReadBackup();
+      const payload = await pickAndReadBackup(password);
       const count = payload.readings.length;
       const date = payload.exported_at.slice(0, 10);
 
@@ -85,6 +91,16 @@ export default function Backup() {
     } catch (e: any) {
       const code = e.message;
       if (code === 'cancelled') return;
+      if (code === 'passwordRequired') {
+        Alert.prompt(t('enterPassword'), t('enterPasswordBody'), (pwd) => {
+          setPassword(pwd || '');
+        }, 'secure-text');
+        return;
+      }
+      if (code === 'wrongPassword') {
+        Alert.alert(t('wrongPasswordTitle'), t('wrongPasswordBody'));
+        return;
+      }
       const msg = code === 'invalidFile' ? t('invalidFile')
         : code === 'notBackup' ? t('notBackup')
         : e.message;
@@ -92,7 +108,6 @@ export default function Backup() {
     }
   };
 
-  // Sección de información en banner. Usamos accent o secondary para tintar.
   const Banner = ({ title, desc, tint }: { title: string; desc: string; tint: 'primary' | 'secondary' | 'danger' }) => {
     const tintColor = tint === 'primary' ? colors.primary
       : tint === 'secondary' ? colors.secondary
@@ -117,6 +132,47 @@ export default function Backup() {
 
       {/* Exportar */}
       <Banner title={t('exportData')} desc={t('exportDesc')} tint="primary"/>
+
+      <Pressable
+        onPress={() => setEncryptEnabled(!encryptEnabled)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: encryptEnabled }}
+        style={({ pressed }) => ({
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          padding: 12, borderRadius: 12, marginBottom: 10,
+          backgroundColor: colors.surfaceSubtle,
+          opacity: pressed ? 0.7 : 1,
+        })}>
+        <View style={{
+          width: 24, height: 24, borderRadius: 6,
+          backgroundColor: encryptEnabled ? colors.primary : 'transparent',
+          borderWidth: 2, borderColor: encryptEnabled ? colors.primary : colors.border,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {encryptEnabled && <Text style={{ color: colors.onPrimary, fontSize: 14, fontWeight: '800' }}>✓</Text>}
+        </View>
+        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{t('encryptBackup')}</Text>
+      </Pressable>
+
+      {encryptEnabled && (
+        <View style={{ marginBottom: 10 }}>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder={t('backupPasswordPlaceholder')}
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+            accessibilityLabel={t('backupPassword')}
+            style={{
+              padding: 14, borderRadius: 12,
+              backgroundColor: colors.bgCard,
+              borderWidth: 1, borderColor: colors.border,
+              color: colors.text, fontSize: 16,
+            }}
+          />
+        </View>
+      )}
+
       <Pressable onPress={onExport} disabled={busy}
         accessibilityRole="button" accessibilityLabel={t('exportBtn')}
         style={({ pressed }) => ({

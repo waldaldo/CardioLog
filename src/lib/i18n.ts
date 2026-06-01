@@ -43,16 +43,13 @@ export const I18N: Record<Lang, Record<string, string>> = {
     tip2: 'Coloca el brazalete a la altura del corazón.',
     tip3: 'No hables ni uses el celular durante la toma.',
 
-    // Home
     last14Days: 'Últimos 14 días',
 
-    // History
     trendZones: 'TENDENCIA · ZONAS OMS',
     showingLast: 'Mostrando los últimos 20 días',
     olderHidden: 'días anteriores no se muestran',
     noRecords: 'Aún no hay registros. Toca + en Inicio para comenzar.',
 
-    // Profile
     years: 'años',
     male: 'Masculino',
     female: 'Femenino',
@@ -68,13 +65,12 @@ export const I18N: Record<Lang, Record<string, string>> = {
     remindersNav: 'Recordatorios',
     backupNav: 'Respaldar o exportar',
     settingsNav: 'Ajustes',
+    historyNav: 'Historial completo',
 
-    // Record
     recordTitle: 'Registrar medición',
     saveError: 'Error',
     saveErrorMsg: 'No se pudo guardar la medición. Intenta de nuevo.',
 
-    // Onboarding
     stepOf: 'PASO',
     of: 'DE',
     onbName: '¿Cómo te llamas?',
@@ -92,7 +88,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     onbErrorMsg: 'No se pudo guardar el perfil. Intenta de nuevo.',
     onbTheme: 'Elige tu tema preferido',
 
-    // Settings
     language: 'Idioma',
     spanish: 'Español',
     english: 'English',
@@ -102,16 +97,53 @@ export const I18N: Record<Lang, Record<string, string>> = {
     version: 'Versión',
     resetData: 'Borrar todos los datos',
     resetTitle: 'Borrar todos los datos',
-    resetMsg: '¿Estás seguro? Esto elimina tu perfil y mediciones.',
+    resetMsg: '¿Estás seguro? Esto elimina tu perfil y todas las mediciones. Esta acción no se puede deshacer.',
     resetError: 'Error',
     resetErrorMsg: 'No se pudo reiniciar la base de datos.',
+    fontSize: 'Tamaño de texto',
 
-    // Reminders
+    setLockPin: 'Configurar PIN',
+    changeLockPin: 'Cambiar PIN',
+    removeLock: 'Quitar bloqueo',
+    lockEnabled: 'Bloqueo activado',
+    lockDisabled: 'Bloqueo desactivado',
+    lockPinSet: 'PIN configurado correctamente',
+    lockPinMismatch: 'Los PIN no coinciden',
+    enterPin: 'Ingresa tu PIN para desbloquear',
+    unlockBiometric: 'Usar huella',
+    unlockPrompt: 'Usa tu huella para desbloquear',
+    usePinInstead: 'Usar PIN',
+    delete: 'Borrar',
+    tooManyAttempts: 'Demasiados intentos',
+    tooManyAttemptsMsg: 'Intenta de nuevo en unos minutos.',
+    lockSetting: 'Bloqueo de acceso',
+    on: 'Activado',
+    off: 'Desactivado',
+    confirmPin: 'Confirmar PIN',
+    enterNewPin: 'Crea tu PIN de 4 dígitos',
+    confirmNewPin: 'Confirma tu PIN',
+    pinWillSecure: 'Este PIN protegerá tus datos',
+    pinAgain: 'Ingresa el mismo PIN nuevamente',
+
+    encryptBackup: 'Cifrar respaldo con contraseña',
+    backupPassword: 'Contraseña de respaldo',
+    backupPasswordPlaceholder: 'Ingresa una contraseña',
+    passwordRequiredTitle: 'Contraseña requerida',
+    passwordRequiredBody: 'Ingresa la contraseña para cifrar tu respaldo.',
+    enterPassword: 'Ingresa contraseña',
+    enterPasswordBody: 'El respaldo está cifrado. Ingresa la contraseña para descifrarlo.',
+    wrongPasswordTitle: 'Contraseña incorrecta',
+    wrongPasswordBody: 'La contraseña no es correcta. Intenta de nuevo.',
+
+    autoDeleteData: 'Eliminar datos antiguos',
+    autoDeleteMonths: 'Eliminar lecturas mayores a',
+    autoDeleteMonthsUnit: 'meses',
+    autoDeleteOff: 'Desactivado',
+
     morningMeasurement: 'Medición matinal',
     eveningMeasurement: 'Medición nocturna',
     addDefaultReminders: '+ Agregar recordatorios por defecto (8:00 y 21:00)',
 
-    // Backup
     backupTitle: 'Respaldo',
     exportData: 'Exportar datos',
     exportDesc: 'Genera un archivo JSON con tus mediciones y perfil. Puedes guardarlo en Google Drive, enviarlo por correo o compartirlo donde quieras.',
@@ -137,7 +169,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     notBackup: 'El archivo no es un respaldo de CardioLog.',
     cancelled: 'Selección cancelada',
 
-    // Readings detail
     lastNDays: 'Últimos',
     days: 'días',
     avgSys: 'Promedio SYS',
@@ -146,12 +177,10 @@ export const I18N: Record<Lang, Record<string, string>> = {
     measurements: 'Mediciones',
     noReadingsPeriod: 'No hay mediciones en los últimos',
 
-    // Recommendations
     avgSystolic: 'Sist. promedio',
     goal: 'Meta',
     searchGoogle: 'Buscar en Google →',
 
-    // PDF Report
     pdfReport: 'Informe PDF',
     pdfReportDesc: 'Genera un PDF con gráfico de tendencia y tabla de historial. Compártelo por correo, WhatsApp o donde quieras.',
     pdfExportBtn: 'Generar informe PDF',
@@ -234,6 +263,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     remindersNav: 'Reminders',
     backupNav: 'Backup or export',
     settingsNav: 'Settings',
+    historyNav: 'Full history',
 
     recordTitle: 'Log a reading',
     saveError: 'Error',
@@ -265,9 +295,48 @@ export const I18N: Record<Lang, Record<string, string>> = {
     version: 'Version',
     resetData: 'Delete all data',
     resetTitle: 'Delete all data',
-    resetMsg: 'Are you sure? This will remove your profile and readings.',
+    resetMsg: 'Are you sure? This will remove your profile and all readings. This action cannot be undone.',
     resetError: 'Error',
     resetErrorMsg: 'Could not reset the database.',
+    fontSize: 'Text size',
+
+    setLockPin: 'Set PIN',
+    changeLockPin: 'Change PIN',
+    removeLock: 'Remove lock',
+    lockEnabled: 'Lock enabled',
+    lockDisabled: 'Lock disabled',
+    lockPinSet: 'PIN set successfully',
+    lockPinMismatch: 'PINs do not match',
+    enterPin: 'Enter PIN to unlock',
+    unlockBiometric: 'Use fingerprint',
+    unlockPrompt: 'Use your fingerprint to unlock',
+    usePinInstead: 'Use PIN',
+    delete: 'Delete',
+    tooManyAttempts: 'Too many attempts',
+    tooManyAttemptsMsg: 'Try again in a few minutes.',
+    lockSetting: 'Access lock',
+    on: 'On',
+    off: 'Off',
+    confirmPin: 'Confirm PIN',
+    enterNewPin: 'Create your 4-digit PIN',
+    confirmNewPin: 'Confirm your PIN',
+    pinWillSecure: 'This PIN will protect your data',
+    pinAgain: 'Enter the same PIN again',
+
+    encryptBackup: 'Encrypt backup with password',
+    backupPassword: 'Backup password',
+    backupPasswordPlaceholder: 'Enter a password',
+    passwordRequiredTitle: 'Password required',
+    passwordRequiredBody: 'Enter the password to encrypt your backup.',
+    enterPassword: 'Enter password',
+    enterPasswordBody: 'This backup is encrypted. Enter the password to decrypt it.',
+    wrongPasswordTitle: 'Wrong password',
+    wrongPasswordBody: 'The password is incorrect. Try again.',
+
+    autoDeleteData: 'Delete old data',
+    autoDeleteMonths: 'Delete readings older than',
+    autoDeleteMonthsUnit: 'months',
+    autoDeleteOff: 'Off',
 
     morningMeasurement: 'Morning measurement',
     eveningMeasurement: 'Evening measurement',
@@ -310,7 +379,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     goal: 'Goal',
     searchGoogle: 'Search Google →',
 
-    // PDF Report
     pdfReport: 'PDF Report',
     pdfReportDesc: 'Generate a PDF with a trend chart and history table. Share via email, WhatsApp, or anywhere.',
     pdfExportBtn: 'Generate PDF report',
