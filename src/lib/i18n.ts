@@ -48,6 +48,8 @@ export const I18N: Record<Lang, Record<string, string>> = {
     trendZones: 'TENDENCIA · ZONAS OMS',
     showingLast: 'Mostrando los últimos 20 días',
     olderHidden: 'días anteriores no se muestran',
+    hiddenDaysMore: '+ {n} días más',
+    hiddenDaysMore_one: '+ 1 día más',
     noRecords: 'Aún no hay registros. Toca + en Inicio para comenzar.',
 
     years: 'años',
@@ -100,7 +102,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     resetMsg: '¿Estás seguro? Esto elimina tu perfil y todas las mediciones. Esta acción no se puede deshacer.',
     resetError: 'Error',
     resetErrorMsg: 'No se pudo reiniciar la base de datos.',
-    fontSize: 'Tamaño de texto',
 
     setLockPin: 'Configurar PIN',
     changeLockPin: 'Cambiar PIN',
@@ -246,6 +247,8 @@ export const I18N: Record<Lang, Record<string, string>> = {
     trendZones: 'TREND · WHO ZONES',
     showingLast: 'Showing last 20 days',
     olderHidden: 'older days not shown',
+    hiddenDaysMore: '+ {n} days more',
+    hiddenDaysMore_one: '+ 1 day more',
     noRecords: 'No records yet. Tap + on Home to start.',
 
     years: 'years',
@@ -298,7 +301,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     resetMsg: 'Are you sure? This will remove your profile and all readings. This action cannot be undone.',
     resetError: 'Error',
     resetErrorMsg: 'Could not reset the database.',
-    fontSize: 'Text size',
 
     setLockPin: 'Set PIN',
     changeLockPin: 'Change PIN',
@@ -409,4 +411,13 @@ export function avg(arr: any[], key: string): number {
 export function daysAgo<T extends { ts: string }>(arr: T[], days: number): T[] {
   const cutoff = Date.now() - days * 24 * 3600 * 1000;
   return arr.filter(r => new Date(r.ts).getTime() >= cutoff);
+}
+
+export function tp(lang: Lang, key: string, params: Record<string, string | number>): string {
+  const dict = I18N[lang] as Record<string, string>;
+  let template = dict[key] ?? key;
+  for (const [k, v] of Object.entries(params)) {
+    template = template.replace(`{${k}}`, String(v));
+  }
+  return template;
 }

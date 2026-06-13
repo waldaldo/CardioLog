@@ -6,15 +6,8 @@ import { useLang } from '@/context/LangContext';
 import type { Lang } from '@/lib/i18n';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { getSetting, setSetting } from '@/db/repositories';
-import type { FontScale } from '@/context/ThemeContext';
 import { useEffect, useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
-
-const FONT_SCALE_OPTIONS: { label: string; value: FontScale }[] = [
-  { label: 'Normal', value: 'normal' },
-  { label: 'Grande', value: 'grande' },
-  { label: 'Extra Grande', value: 'xl' },
-];
 
 const AUTO_DELETE_OPTIONS = [
   { label: 'Off', value: '' },
@@ -26,13 +19,13 @@ const AUTO_DELETE_OPTIONS = [
 
 export default function Settings() {
   const { lang, t, setLang } = useLang();
-  const { colors, isDark, setTheme, fontScale, setFontScale } = useTheme();
+  const { colors, isDark, setTheme } = useTheme();
   const [lockEnabled, setLockEnabled] = useState(false);
   const [autoDeleteMonths, setAutoDeleteMonths] = useState('');
 
   useEffect(() => {
     (async () => {
-      const pin = await getSetting('lockPin');
+      const pin = await getSetting('lockPinHash');
       setLockEnabled(!!pin);
       const val = await getSetting('autoDeleteMonths');
       setAutoDeleteMonths(val || '');
@@ -58,21 +51,13 @@ export default function Settings() {
     await setLang(next);
   };
 
-  const cycleFontScale = async () => {
-    const currentIndex = FONT_SCALE_OPTIONS.findIndex(o => o.value === fontScale);
-    const nextIndex = (currentIndex + 1) % FONT_SCALE_OPTIONS.length;
-    await setFontScale(FONT_SCALE_OPTIONS[nextIndex].value);
-  };
-
-  const getFontScaleLabel = () => FONT_SCALE_OPTIONS.find(o => o.value === fontScale)?.label ?? 'Normal';
-
   const manageLock = () => {
     if (lockEnabled) {
       Alert.alert(t('lockEnabled'), '', [
         { text: t('cancel') },
         { text: t('changeLockPin'), onPress: () => router.push('/set-pin') },
         { text: t('removeLock'), style: 'destructive', onPress: async () => {
-          await setSetting('lockPin', '');
+          await setSetting('lockPinHash', '');
           setLockEnabled(false);
         }},
       ]);
@@ -147,7 +132,6 @@ export default function Settings() {
       <View style={{ backgroundColor: colors.bgCard, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
         <ToggleRow label={t('language')} value={lang === 'es' ? t('spanish') : t('english')} onToggle={toggleLang}/>
         <ToggleRow label={t('theme')} value={isDark ? t('dark') : t('light')} onToggle={() => setTheme(!isDark)}/>
-        <ToggleRow label={t('fontSize')} value={getFontScaleLabel()} onToggle={cycleFontScale}/>
         <ActionRow label={t('lockSetting')} value={lockEnabled ? t('on') : t('off')} onPress={manageLock}/>
         <ActionRow label={t('autoDeleteData')} value={getAutoDeleteLabel()} onPress={cycleAutoDelete}/>
         <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center' }}>
