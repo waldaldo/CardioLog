@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, Alert, Vibration } from 'react-native';
 import { router } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
+import CryptoJS from 'crypto-js';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 import { Logo } from '@/components/Logo';
@@ -9,30 +10,56 @@ import { getSetting } from '@/db/repositories';
 import Svg, { Path } from 'react-native-svg';
 
 const PIN_LENGTH = 4;
+const PBKDF2_ITERATIONS = 100_000;
+
+function parseStoredHash(stored: string | null): { salt: string; hash: string } | null {
+  if (!stored || !stored.startsWith('pbkdf2$')) return null;
+  const parts = stored.split('$');
+  if (parts.length !== 3) return null;
+  return { salt: parts[1], hash: parts[2] };
+}
+
+function verifyPin(entered: string, stored: { salt: string; hash: string }): boolean {
+  const saltWA = CryptoJS.enc.Hex.parse(stored.salt);
+  const hashWA = CryptoJS.PBKDF2(entered, saltWA, {
+    keySize: 256 / 32,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  const enteredHex = hashWA.toString(CryptoJS.enc.Hex);
+  // Comparación de longitud constante para evitar timing attacks.
+  if (enteredHex.length !== stored.hash.length) return false;
+  let diff = 0;
+  for (let i = 0; i < enteredHex.length; i++) {
+    diff |= enteredHex.charCodeAt(i) ^ stored.hash.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 export default function LockScreen() {
   const { colors } = useTheme();
   const { t } = useLang();
   const [pin, setPin] = useState('');
   const [attempts, setAttempts] = useState(0);
-  const biometricAvailable = useRef(false);
-  const savedPin = useRef<string | null>(null);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [storedHash, setStoredHash] = useState<{ salt: string; hash: string } | null>(null);
 
   useEffect(() => {
     (async () => {
-      const storedPin = await getSetting('lockPin');
-      savedPin.current = storedPin;
+      const raw = await getSetting('lockPinHash');
+      setStoredHash(parseStoredHash(raw));
       const compat = await LocalAuthentication.hasHardwareAsync();
       const enrolled = await LocalAuthentication.isEnrolledAsync();
-      biometricAvailable.current = compat && enrolled;
-      if (biometricAvailable.current) {
+      const available = !!(compat && enrolled);
+      setBiometricAvailable(available);
+      if (available) {
         setTimeout(() => attemptBiometric(), 500);
       }
     })();
   }, []);
 
   const attemptBiometric = async () => {
-    if (!biometricAvailable.current) return;
+    if (!biometricAvailable) return;
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: t('unlockPrompt'),
@@ -58,16 +85,18 @@ export default function LockScreen() {
   const onDelete = () => setPin(p => p.slice(0, -1));
 
   const checkPin = (entered: string) => {
-    if (entered === savedPin.current) {
+    if (storedHash && verifyPin(entered, storedHash)) {
       router.replace('/(tabs)');
     } else {
       Vibration.vibrate(200);
       setPin('');
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      if (newAttempts >= 5) {
-        Alert.alert(t('tooManyAttempts'), t('tooManyAttemptsMsg'));
-      }
+      setAttempts((a) => {
+        const next = a + 1;
+        if (next >= 5) {
+          Alert.alert(t('tooManyAttempts'), t('tooManyAttemptsMsg'));
+        }
+        return next;
+      });
     }
   };
 
@@ -132,7 +161,7 @@ export default function LockScreen() {
         ))}
       </View>
 
-      {biometricAvailable.current && (
+      {biometricAvailable && (
         <Pressable
           onPress={attemptBiometric}
           accessibilityRole="button"

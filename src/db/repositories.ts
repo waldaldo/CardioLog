@@ -84,6 +84,15 @@ export async function clearAllReadings(): Promise<void> {
   await db.runAsync(`DELETE FROM readings`);
 }
 
+// Elimina todas las mediciones con ts < cutoffISO en un solo query.
+// Devuelve la cantidad de filas eliminadas. El índice idx_readings_ts
+// (definido en schema.ts) hace que esta operación sea O(log n + k).
+export async function deleteReadingsOlderThan(cutoffISO: string): Promise<number> {
+  const db = await getDb();
+  const result = await db.runAsync(`DELETE FROM readings WHERE ts < ?`, [cutoffISO]);
+  return (result as any).changes ?? 0;
+}
+
 // Inserta una medición conservando el id y category_id originales del respaldo.
 export async function insertReadingRaw(r: Reading): Promise<void> {
   const db = await getDb();

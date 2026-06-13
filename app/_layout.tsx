@@ -1,13 +1,12 @@
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as NavThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { getDb } from '@/db/client';
-import { getProfile, getSetting } from '@/db/repositories';
-import { listReadings, clearAllReadings } from '@/db/repositories';
+import { getProfile, getSetting, deleteReadingsOlderThan } from '@/db/repositories';
 import { syncAllFromDb } from '@/lib/notifications';
 import { SplashOverlay } from '@/components/SplashOverlay';
 import { LangProvider } from '@/context/LangContext';
@@ -38,21 +37,14 @@ function AppContent() {
   const [locked, setLocked] = useState(false);
 
   const applyAutoDelete = async () => {
-    try {
-      const months = await getSetting('autoDeleteMonths');
-      if (!months) return;
-      const cutoff = new Date();
-      cutoff.setMonth(cutoff.getMonth() - parseInt(months, 10));
-      const cutoffISO = cutoff.toISOString();
-      const all = await listReadings(10000);
-      const toDelete = all.filter(r => r.ts < cutoffISO);
-      if (toDelete.length > 0) {
-        for (const r of toDelete) {
-          const { deleteReading } = await import('@/db/repositories');
-          await deleteReading(r.id);
-        }
-      }
-    } catch {}
+    const months = await getSetting('autoDeleteMonths');
+    if (!months) return 0;
+    const n = parseInt(months, 10);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - n);
+    if (isNaN(cutoff.getTime())) return 0;
+    return deleteReadingsOlderThan(cutoff.toISOString());
   };
 
   useEffect(() => {
@@ -63,8 +55,8 @@ function AppContent() {
         await syncAllFromDb();
         await applyAutoDelete();
         setHasProfile(!!profile);
-        const lockPin = await getSetting('lockPin');
-        setLocked(!!lockPin);
+        const lockPinHash = await getSetting('lockPinHash');
+        setLocked(!!lockPinHash);
         setReady(true);
       } catch (e: any) {
         setError(e);
@@ -74,16 +66,23 @@ function AppContent() {
     })();
   }, []);
 
+  // Re-bloquear al volver del background si hay un PIN configurado.
   useEffect(() => {
-    if (ready && !hasProfile) {
-      router.replace('/onboarding');
-    } else if (ready && hasProfile && !locked) {
-      // normal flow to tabs
-    }
-  }, [ready, hasProfile, locked]);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background' || state === 'inactive') {
+        getSetting('lockPinHash').then((h) => {
+          if (h) setLocked(true);
+        }).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
-    if (ready && hasProfile && locked) {
+    if (!ready) return;
+    if (!hasProfile) {
+      router.replace('/onboarding');
+    } else if (locked) {
       router.replace('/lock');
     }
   }, [ready, hasProfile, locked]);

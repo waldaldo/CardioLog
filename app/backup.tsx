@@ -18,7 +18,9 @@ export default function Backup() {
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('30d');
   const [pdfBusy, setPdfBusy] = useState(false);
   const [encryptEnabled, setEncryptEnabled] = useState(false);
-  const [password, setPassword] = useState('');
+  const [exportPassword, setExportPassword] = useState('');
+  const [importError, setImportError] = useState('');
+  const [importPassword, setImportPassword] = useState('');
 
   const refresh = async () => {
     try {
@@ -31,13 +33,13 @@ export default function Backup() {
   useEffect(() => { refresh(); }, []);
 
   const onExport = async () => {
-    if (encryptEnabled && !password) {
+    if (encryptEnabled && !exportPassword) {
       Alert.alert(t('passwordRequiredTitle'), t('passwordRequiredBody'));
       return;
     }
     try {
       setBusy(true);
-      const r = await backupNow(encryptEnabled, password);
+      const r = await backupNow(encryptEnabled, exportPassword);
       await refresh();
       Alert.alert(t('backupDone'), `${t('backupDoneMsg')} ${r.count} ${t('backupDoneSuffix')}`);
     } catch (e: any) {
@@ -60,9 +62,11 @@ export default function Backup() {
     }
   };
 
-  const onImport = async () => {
+  const tryImport = async (pwd: string) => {
     try {
-      const payload = await pickAndReadBackup(password);
+      const payload = await pickAndReadBackup(pwd);
+      setImportError('');
+      setImportPassword('');
       const count = payload.readings.length;
       const date = payload.exported_at.slice(0, 10);
 
@@ -92,13 +96,11 @@ export default function Backup() {
       const code = e.message;
       if (code === 'cancelled') return;
       if (code === 'passwordRequired') {
-        Alert.prompt(t('enterPassword'), t('enterPasswordBody'), (pwd) => {
-          setPassword(pwd || '');
-        }, 'secure-text');
+        setImportError(t('enterPasswordBody'));
         return;
       }
       if (code === 'wrongPassword') {
-        Alert.alert(t('wrongPasswordTitle'), t('wrongPasswordBody'));
+        setImportError(t('wrongPasswordBody'));
         return;
       }
       const msg = code === 'invalidFile' ? t('invalidFile')
@@ -106,6 +108,20 @@ export default function Backup() {
         : e.message;
       Alert.alert(t('saveError'), msg);
     }
+  };
+
+  const onImport = () => {
+    setImportError('');
+    setImportPassword('');
+    tryImport('');
+  };
+
+  const onImportRetry = () => {
+    if (!importPassword) {
+      setImportError(t('enterPasswordBody'));
+      return;
+    }
+    tryImport(importPassword);
   };
 
   const Banner = ({ title, desc, tint }: { title: string; desc: string; tint: 'primary' | 'secondary' | 'danger' }) => {
@@ -157,8 +173,8 @@ export default function Backup() {
       {encryptEnabled && (
         <View style={{ marginBottom: 10 }}>
           <TextInput
-            value={password}
-            onChangeText={setPassword}
+            value={exportPassword}
+            onChangeText={setExportPassword}
             placeholder={t('backupPasswordPlaceholder')}
             placeholderTextColor={colors.textMuted}
             secureTextEntry
@@ -194,11 +210,44 @@ export default function Backup() {
           padding: 16, borderRadius: 14,
           backgroundColor: colors.secondary + '22',
           borderWidth: 1.5, borderColor: colors.secondary,
-          alignItems: 'center', marginBottom: 28,
+          alignItems: 'center', marginBottom: 12,
           opacity: pressed ? 0.85 : 1,
         })}>
         <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '800' }}>{t('importBtn')}</Text>
       </Pressable>
+
+      {importError !== '' && (
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ color: colors.oms.hta2, fontSize: 13, marginBottom: 8 }}>{importError}</Text>
+          <TextInput
+            value={importPassword}
+            onChangeText={setImportPassword}
+            placeholder={t('enterPassword')}
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+            accessibilityLabel={t('enterPassword')}
+            style={{
+              padding: 14, borderRadius: 12,
+              backgroundColor: colors.bgCard,
+              borderWidth: 1, borderColor: colors.border,
+              color: colors.text, fontSize: 16,
+              marginBottom: 8,
+            }}
+          />
+          <Pressable
+            onPress={onImportRetry}
+            accessibilityRole="button"
+            accessibilityLabel={t('importBtn')}
+            style={({ pressed }) => ({
+              padding: 14, borderRadius: 12,
+              backgroundColor: colors.secondary,
+              alignItems: 'center',
+              opacity: pressed ? 0.85 : 1,
+            })}>
+            <Text style={{ color: colors.onPrimary, fontSize: 14, fontWeight: '700' }}>{t('importBtn')}</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Informe PDF */}
       <Banner title={t('pdfReport')} desc={t('pdfReportDesc')} tint="danger"/>

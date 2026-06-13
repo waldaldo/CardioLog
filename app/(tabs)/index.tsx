@@ -5,7 +5,7 @@ import Animated, { FadeInUp, FadeInRight, FadeInDown } from 'react-native-reanim
 import { useReadings } from '@/hooks/useReadings';
 import { useProfile } from '@/hooks/useProfile';
 import { classifyBP, bmiOf, omsColorFor } from '@/lib/oms';
-import { avg, daysAgo } from '@/lib/i18n';
+import { avg, daysAgo, tp } from '@/lib/i18n';
 import { getRecommendations } from '@/lib/recommendations';
 import { AreaChart } from '@/components/AreaChart';
 import { Logo } from '@/components/Logo';
@@ -139,10 +139,8 @@ export default function HomeScreen() {
                     const cColor = omsColorFor(c.id, isDark);
                     const time = new Date(r.ts).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
                     return (
-                      <Pressable
+                      <View
                         key={r.id}
-                        onPress={() => router.push('/record')}
-                        accessibilityRole="button"
                         accessibilityLabel={`${time}, ${r.sys} sobre ${r.dia}, ${c.label[lang]}, ${r.pulse} ${t('bpm')}`}
                         style={{
                           flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
@@ -162,7 +160,7 @@ export default function HomeScreen() {
                             {r.note ? ` · ${r.note}` : ''}
                           </Text>
                         </View>
-                      </Pressable>
+                      </View>
                     );
                   })}
                 </View>
@@ -177,7 +175,7 @@ export default function HomeScreen() {
                   opacity: pressed ? 0.7 : 1,
                 })}>
                 <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '700' }}>
-                  + {hiddenDaysCount} {hiddenDaysCount === 1 ? 'día' : 'días'} más
+                  {tp(lang, hiddenDaysCount === 1 ? 'hiddenDaysMore_one' : 'hiddenDaysMore', { n: hiddenDaysCount })}
                 </Text>
               </Pressable>
             )}

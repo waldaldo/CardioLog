@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import CryptoJS from 'crypto-js';
 import {
   listReadings, getProfile, logBackup,
   saveProfile, clearAllReadings, insertReadingRaw,
@@ -20,51 +21,104 @@ export interface BackupPayload {
   encrypted?: boolean;
 }
 
-function xorEncrypt(data: string, key: string): string {
-  const result: number[] = [];
-  for (let i = 0; i < data.length; i++) {
-    result.push(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-  }
-  return String.fromCharCode(...result);
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_KEY_SIZE_WORDS = 256 / 32; // 256-bit key, 8 words (32 bits each)
+
+interface EncryptedEnvelope {
+  v: 2;
+  kdf: 'pbkdf2-sha256-100k';
+  salt: string;
+  iv: string;
+  data: string;
 }
 
-function toBase64(str: string): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  const bytes: number[] = [];
-  for (let i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i));
-  let result = '';
-  for (let i = 0; i < bytes.length; i += 3) {
-    const b0 = bytes[i], b1 = bytes[i + 1] ?? 0, b2 = bytes[i + 2] ?? 0;
-    result += chars[b0 >> 2] + chars[((b0 & 3) << 4) | (b1 >> 4)] + (i + 1 < bytes.length ? chars[((b1 & 15) << 2) | (b2 >> 6)] : '=') + (i + 2 < bytes.length ? chars[b2 & 63] : '=');
-  }
-  return result;
+function encryptPayload(plaintext: string, password: string): EncryptedEnvelope {
+  const salt = CryptoJS.lib.WordArray.random(16);
+  const iv = CryptoJS.lib.WordArray.random(16);
+  const key = CryptoJS.PBKDF2(password, salt, {
+    keySize: PBKDF2_KEY_SIZE_WORDS,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+    iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+  return {
+    v: 2,
+    kdf: 'pbkdf2-sha256-100k',
+    salt: salt.toString(CryptoJS.enc.Hex),
+    iv: iv.toString(CryptoJS.enc.Hex),
+    data: encrypted.toString(),
+  };
 }
 
-function fromBase64(b64: string): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  const clean = b64.replace(/[^A-Za-z0-9+/=]/g, '');
-  const bytes: number[] = [];
-  for (let i = 0; i < clean.length; i += 4) {
-    const e0 = chars.indexOf(clean[i]), e1 = chars.indexOf(clean[i + 1] ?? '=');
-    const e2 = chars.indexOf(clean[i + 2] ?? '='), e3 = chars.indexOf(clean[i + 3] ?? '=');
-    bytes.push((e0 << 2) | (e1 >> 4), ((e1 & 15) << 4) | (e2 >> 2), ((e2 & 3) << 6) | e3);
+function decryptPayload(payload: EncryptedEnvelope, password: string): string {
+  let salt: CryptoJS.lib.WordArray;
+  let iv: CryptoJS.lib.WordArray;
+  try {
+    salt = CryptoJS.enc.Hex.parse(payload.salt);
+    iv = CryptoJS.enc.Hex.parse(payload.iv);
+  } catch {
+    throw new Error('wrongPassword');
   }
-  return String.fromCharCode(...bytes.slice(0, -1));
+  const key = CryptoJS.PBKDF2(password, salt, {
+    keySize: PBKDF2_KEY_SIZE_WORDS,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  let plain: string;
+  try {
+    const decrypted = CryptoJS.AES.decrypt(payload.data, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+    plain = decrypted.toString(CryptoJS.enc.Utf8);
+  } catch {
+    throw new Error('wrongPassword');
+  }
+  // Con PBKDF2 + AES-CBC, una contraseña incorrecta producirá un texto
+  // descifrado con bytes basura. JSON.parse fallaría, pero también podría
+  // ocasionalmente "exito" por coincidencia. Validamos con un marcador
+  // de texto plano conocido para detectar ese caso.
+  if (!plain || !plain.startsWith('{"version":')) {
+    throw new Error('wrongPassword');
+  }
+  return plain;
+}
+
+function isEncryptedEnvelope(parsed: any): parsed is EncryptedEnvelope {
+  return (
+    parsed &&
+    parsed.v === 2 &&
+    parsed.kdf === 'pbkdf2-sha256-100k' &&
+    typeof parsed.salt === 'string' &&
+    typeof parsed.iv === 'string' &&
+    typeof parsed.data === 'string'
+  );
 }
 
 export async function backupNow(encrypted = false, password = ''): Promise<{ count: number }> {
   const profile = await getProfile();
   const readings = await listReadings(10000);
 
-  let json = JSON.stringify({ version: 1, exported_at: new Date().toISOString(), profile, readings });
-  let finalJson = json;
+  const inner = JSON.stringify({
+    version: 1,
+    exported_at: new Date().toISOString(),
+    profile,
+    readings,
+  });
 
-  if (encrypted && password) {
-    const key = password.repeat(16).slice(0, 16);
-    finalJson = JSON.stringify({
-      encrypted: true,
-      data: toBase64(xorEncrypt(json, key)),
-    });
+  let finalJson: string;
+  if (encrypted) {
+    if (!password) {
+      throw new Error('passwordRequired');
+    }
+    finalJson = JSON.stringify(encryptPayload(inner, password));
+  } else {
+    finalJson = inner;
   }
 
   const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}${encrypted ? '-encrypted' : ''}.json`;
@@ -85,7 +139,7 @@ export async function backupNow(encrypted = false, password = ''): Promise<{ cou
 }
 
 // Abre el selector de archivos, lee el JSON y devuelve el contenido validado.
-// Si está cifrado con XOR+Base64, el usuario debe proporcionar la contraseña.
+// Si está cifrado, el usuario debe proporcionar la contraseña.
 export async function pickAndReadBackup(password = ''): Promise<BackupPayload> {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'application/json',
@@ -104,21 +158,23 @@ export async function pickAndReadBackup(password = ''): Promise<BackupPayload> {
     throw new Error('invalidFile');
   }
 
-  if (!parsed.profile && !parsed.readings && !parsed.encrypted) {
-    throw new Error('notBackup');
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('invalidFile');
   }
 
-  if (parsed.encrypted) {
+  if (isEncryptedEnvelope(parsed)) {
     if (!password) {
       throw new Error('passwordRequired');
     }
-    const key = password.repeat(16).slice(0, 16);
-    const decrypted = xorEncrypt(fromBase64(parsed.data), key);
+    const plaintext = decryptPayload(parsed, password);
     try {
-      parsed = JSON.parse(decrypted);
+      parsed = JSON.parse(plaintext);
     } catch {
       throw new Error('wrongPassword');
     }
+  } else if (parsed.encrypted) {
+    // Envelope heredado o formato desconocido: tratar como cifrado desconocido.
+    throw new Error('notBackup');
   }
 
   if (!parsed.profile || !Array.isArray(parsed.readings)) {

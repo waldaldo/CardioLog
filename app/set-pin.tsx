@@ -1,14 +1,25 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { View, Text, Pressable, Vibration } from 'react-native';
 import { router } from 'expo-router';
+import CryptoJS from 'crypto-js';
 import { setSetting } from '@/db/repositories';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import * as LocalAuthentication from 'expo-local-authentication';
 import Svg, { Path } from 'react-native-svg';
 
 const PIN_LENGTH = 4;
+const PBKDF2_ITERATIONS = 100_000;
+
+function hashPin(pin: string): string {
+  const salt = CryptoJS.lib.WordArray.random(16);
+  const hash = CryptoJS.PBKDF2(pin, salt, {
+    keySize: 256 / 32,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  return `pbkdf2$${salt.toString(CryptoJS.enc.Hex)}$${hash.toString(CryptoJS.enc.Hex)}`;
+}
 
 export default function SetPinScreen() {
   const { t } = useLang();
@@ -33,8 +44,13 @@ export default function SetPinScreen() {
         } else {
           if (next === firstPin.current) {
             (async () => {
-              await setSetting('lockPin', next);
-              router.back();
+              try {
+                await setSetting('lockPinHash', hashPin(next));
+                router.back();
+              } catch {
+                setError(t('saveError'));
+                setPin('');
+              }
             })();
           } else {
             Vibration.vibrate(200);
