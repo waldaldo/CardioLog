@@ -9,12 +9,12 @@ Todos los datos se almacenan exclusivamente en el dispositivo. La app no tiene s
 
 - Registro de mediciones (sistólica, diastólica, pulso) con clasificación OMS en tiempo real
 - Historial agrupado por día con gráfico de tendencia
-- Promedios de 7 y 30 días con acceso al detalle de cada rango
+- Promedios de 7 y 30 días con métricas de variabilidad (desvío estándar y coeficiente de variación) en el detalle
 - Recomendaciones de estilo de vida personalizadas según presión e IMC
 - Recordatorios locales programables (sin internet)
-- Pantalla de bloqueo con PIN para proteger el acceso a la app
+- Pantalla de bloqueo con PIN (hash PBKDF2) y biometría
 - Onboarding guiado de 5 pasos para nueva configuración
-- Exportar respaldo en JSON o PDF e importar desde archivo — el usuario elige dónde guardarlo
+- Exportar respaldo en JSON (con cifrado AES-256 opcional) o PDF, e importar desde archivo
 - Perfil editable con cálculo de IMC automático
 - Tema oscuro y claro con cambio en tiempo real
 - Soporte completo para iOS y Android
@@ -41,7 +41,10 @@ El código es abierto y auditable.
 - **expo-sqlite** — base de datos local SQLite
 - **expo-notifications** — recordatorios locales
 - **expo-document-picker** + **expo-sharing** — exportar e importar respaldos sin OAuth
-- **expo-local-authentication** — pantalla de bloqueo con PIN
+- **expo-print** — generación del informe PDF
+- **expo-local-authentication** — bloqueo con PIN y biometría
+- **expo-localization** — detección automática de idioma del dispositivo
+- **crypto-js** — hash PBKDF2 del PIN y cifrado AES-256 de respaldos
 - **react-native-reanimated** — animaciones de transición sin parpadeo
 - **react-native-svg** — gráfico de tendencia de presión arterial
 
@@ -154,54 +157,67 @@ npx expo run:ios
 
 ```
 app/                          # Pantallas (Expo Router — cada archivo = una ruta)
-├── (tabs)/
-│   ├── index.tsx             # Inicio: última medición, promedios, gráfico
-│   ├── history.tsx           # Historial agrupado por día
+├── (tabs)/                   # Bottom tabs (2: Inicio, Perfil)
+│   ├── _layout.tsx           # Tabs layout
+│   ├── index.tsx             # Inicio: última medición, promedios, gráfico, historial
 │   └── profile.tsx           # Perfil del usuario + menú de navegación
+├── _layout.tsx               # Raíz: inicialización de SQLite + árbol de navegación
 ├── onboarding.tsx            # Configuración inicial (5 pasos)
-├── record.tsx                # Registrar nueva medición
-├── readings-detail.tsx       # Detalle de mediciones por rango (7 o 30 días)
+├── record.tsx                # Registrar nueva medición (modal)
+├── readings-detail.tsx       # Detalle de período con variabilidad (σ y CV)
 ├── recommendations.tsx       # Recomendaciones OMS expandibles
 ├── reminders.tsx             # Gestión de recordatorios
-├── backup.tsx                # Respaldo en Google Drive
-├── settings.tsx              # Idioma, tema, borrar datos
-├── lock.tsx                  # Pantalla de bloqueo con PIN
-├── set-pin.tsx               # Configuración del PIN
-└── _layout.tsx               # Raíz: inicialización de SQLite + árbol de navegación
+├── backup.tsx                # Exportar/importar JSON (cifrado opcional) y PDF
+├── settings.tsx              # Idioma, tema, PIN, borrado, auto-eliminación
+├── lock.tsx                  # Pantalla de bloqueo con PIN + biometría
+└── set-pin.tsx               # Configuración/cambio de PIN
 
 src/
 ├── db/
 │   ├── schema.ts             # Definición de tablas SQLite
 │   ├── client.ts             # Singleton de conexión a la base de datos
-│   └── repositories.ts       # CRUD por entidad (lecturas, perfil, recordatorios)
+│   └── repositories.ts       # CRUD por entidad (lecturas, perfil, recordatorios, ajustes)
 ├── hooks/
 │   ├── useReadings.ts        # Estado y operaciones de mediciones
 │   └── useProfile.ts         # Estado y operaciones del perfil
 ├── lib/
-│   ├── oms.ts                # Clasificación OMS de presión arterial
+│   ├── oms.ts                # Clasificación OMS de presión arterial + IMC
+│   ├── stats.ts              # Desvío estándar (muestral) y coeficiente de variación
 │   ├── recommendations.ts    # Recomendaciones según presión e IMC
-│   ├── i18n.ts               # Textos ES/EN + funciones de fecha y promedio
+│   ├── i18n.ts               # Textos ES/EN + helpers de fecha, promedio y formato
 │   ├── notifications.ts      # Programación de recordatorios locales
-│   └── drive.ts              # Exportar/importar respaldos JSON (expo-sharing + expo-document-picker)
+│   ├── drive.ts              # Exportar/importar respaldos JSON (cifrado AES-256 opcional)
+│   ├── chartSvg.ts           # Generador de SVG del gráfico para el PDF
+│   └── pdfReport.ts          # Generación del informe PDF (HTML → PDF)
 ├── components/
-│   ├── AreaChart.tsx         # Gráfico SVG de tendencia con zonas OMS
+│   ├── AreaChart.tsx         # Gráfico SVG interactivo con zonas OMS
+│   ├── SummaryChart.tsx      # Gráfico de resumen para la pantalla de detalle
 │   ├── ScreenSlide.tsx       # Animación de entrada para pantallas de stack
 │   ├── TabFade.tsx           # Animación de entrada para pestañas
-│   └── ScreenHeader.tsx      # Header adaptativo con logo
+│   ├── ScreenHeader.tsx      # Header adaptativo
+│   ├── Logo.tsx              # Logo SVG de la app
+│   ├── BackButton.tsx        # Botón de volver
+│   └── SplashOverlay.tsx     # Overlay del splash
+├── context/
+│   ├── LangContext.tsx       # Idioma actual (es/en) con detección automática
+│   └── ThemeContext.tsx      # Tema claro/oscuro persistido
 ├── theme/
-│   └── tokens.ts             # Colores, tipografía y espaciado base
+│   └── tokens.ts             # Sistema de diseño WCAG AA (colores, tipografía, espaciado)
+├── __mocks__/
+│   └── expo-sqlite.ts        # Mock de expo-sqlite para tests Jest
 └── types/
     └── expo-local-authentication.d.ts  # Tipos para autenticación local
 ```
 
 ## Respaldo y restauración
 
-El respaldo no requiere configuración ni cuentas adicionales.
+El respaldo no requiere configuración ni cuentas adicionales. La exportación usa el menú de compartir del sistema, sin OAuth ni servidores propios.
 
-- **Exportar:** genera un archivo `cardiolog-backup-YYYY-MM-DD.json` y abre el menú de compartir del sistema. El usuario elige dónde guardarlo (Google Drive, correo, Telegram, almacenamiento local, etc.).
-- **Importar:** abre el selector de archivos del sistema para elegir un respaldo `.json` previo. Muestra un resumen antes de confirmar, y reemplaza el perfil y mediciones actuales con los datos del archivo.
+- **Exportar JSON (opcional cifrado):** genera un archivo `cardiolog-backup-YYYY-MM-DD.json`. Si se activa la opción de cifrado, el archivo resultante tiene un envelope `pbkdf2-sha256-100k` (PBKDF2 con SHA-256, 100 000 iteraciones) y los datos van cifrados con AES-256-CBC. El usuario elige dónde guardarlo (Drive, correo, Telegram, USB, etc.).
+- **Exportar PDF:** genera un informe en PDF con gráfico de tendencia, métricas de variabilidad (σ y CV) y tabla de historial. Se puede acotar a todos los datos, últimos 30 días o últimos 90 días.
+- **Importar:** abre el selector de archivos del sistema para elegir un respaldo `.json` previo. Si está cifrado, se pide la contraseña. Muestra un resumen antes de confirmar, y reemplaza el perfil y mediciones actuales con los datos del archivo.
 
-El formato del archivo de respaldo es:
+El formato del archivo de respaldo (texto plano, antes del cifrado) es:
 
 ```json
 {

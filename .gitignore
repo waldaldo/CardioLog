@@ -40,3 +40,6 @@ Thumbs.db
 
 # Skills (Custom AI agent skills)
 skills/
+
+# Meta-documentación de agentes / no parte de la app
+AGENTS.md
