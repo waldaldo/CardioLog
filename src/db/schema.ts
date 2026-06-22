@@ -50,7 +50,6 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   lang: 'es',
   theme: 'dark',
   accent: 'cyan',
-  fontScale: 'normal',
   autoBackup: '1',
   backupFrequency: 'daily',
 };

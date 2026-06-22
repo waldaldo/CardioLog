@@ -3,9 +3,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { useReadings } from '@/hooks/useReadings';
 import { classifyBP, omsColorFor } from '@/lib/oms';
 import { daysAgo, avg } from '@/lib/i18n';
+import { stdDev, cv } from '@/lib/stats';
 import { useTheme } from '@/context/ThemeContext';
 import { useLang } from '@/context/LangContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SummaryChart } from '@/components/SummaryChart';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
+const HIGH_SYS_VARIABILITY_THRESHOLD = 12;
 
 export default function ReadingsDetail() {
   const { days } = useLocalSearchParams<{ days: string }>();
@@ -29,6 +34,15 @@ export default function ReadingsDetail() {
   const avgDia = avg(filtered, 'dia');
   const avgPulse = avg(filtered, 'pulse');
 
+  const hasData = filtered.length >= 2;
+  const stdSys = hasData ? Math.round(stdDev(filtered, 'sys')) : null;
+  const stdDia = hasData ? Math.round(stdDev(filtered, 'dia')) : null;
+  const cvSys = hasData ? cv(filtered, 'sys') : null;
+  const cvDia = hasData ? cv(filtered, 'dia') : null;
+  const stdSysColor = stdSys !== null && stdSys >= HIGH_SYS_VARIABILITY_THRESHOLD
+    ? colors.oms.hta1
+    : colors.text;
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
@@ -36,6 +50,19 @@ export default function ReadingsDetail() {
 
       {filtered.length > 0 ? (
         <>
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            style={{
+              padding: 16, borderRadius: 20, backgroundColor: colors.bgCard,
+              borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+              alignItems: 'center'
+            }}>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', marginBottom: 12, alignSelf: 'flex-start' }}>
+              {t('trendZones')}
+            </Text>
+            <SummaryChart readings={filtered} width={330} />
+          </Animated.View>
+
           <View style={{
             padding: 16, borderRadius: 16, flexDirection: 'row',
             backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border, marginBottom: 16,
@@ -45,6 +72,26 @@ export default function ReadingsDetail() {
             <SummaryCol label={t('avgPulse')} value={`${avgPulse}`} accent={colors.secondary}/>
             <SummaryCol label={t('measurements')} value={`${filtered.length}`} accent={colors.oms.optima}/>
           </View>
+
+          {hasData && (
+            <Animated.View
+              entering={FadeInDown.delay(80).duration(400)}
+              style={{ marginBottom: 16 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8 }}>
+                {t('variability').toUpperCase()}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <VariabilityCard
+                  title={t('systolic')}
+                  std={stdSys} cv={cvSys} stdColor={stdSysColor}
+                />
+                <VariabilityCard
+                  title={t('diastolic')}
+                  std={stdDia} cv={cvDia} stdColor={colors.text}
+                />
+              </View>
+            </Animated.View>
+          )}
 
           {Object.entries(grouped).map(([day, rows]) => (
             <View key={day} style={{ marginBottom: 16 }}>
@@ -100,6 +147,32 @@ function SummaryCol({ label, value, accent }: { label: string; value: string; ac
       <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 0.3, marginTop: 4, textAlign: 'center' }}>
         {label.toUpperCase()}
       </Text>
+    </View>
+  );
+}
+
+function VariabilityCard({ title, std, cv, stdColor }: {
+  title: string; std: number | null; cv: number | null; stdColor: string;
+}) {
+  const { colors } = useTheme();
+  const stdText = std === null ? '—' : `${std}`;
+  const cvText = cv === null ? '—' : `${cv.toFixed(1)}%`;
+  return (
+    <View style={{
+      flex: 1, padding: 16, borderRadius: 16,
+      backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border,
+    }}>
+      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 10 }}>
+        {title.toUpperCase()}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+        <Text style={{ color: stdColor, fontSize: 20, fontWeight: '800' }}>{stdText}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>σ mmHg</Text>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '700' }}>{cvText}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 11 }}>CV</Text>
+      </View>
     </View>
   );
 }

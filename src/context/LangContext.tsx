@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import * as Localization from 'expo-localization';
 import { getSetting, setSetting } from '@/db/repositories';
 import { I18N, Lang } from '@/lib/i18n';
 
@@ -23,7 +24,17 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const stored = await getSetting('lang');
-        if (stored === 'en' || stored === 'es') setLangState(stored);
+        if (stored === 'en' || stored === 'es') {
+          setLangState(stored);
+        } else {
+          // Auto-detect language
+          const deviceLang = Localization.getLocales()[0]?.languageCode || 'en';
+          const autoLang: Lang = deviceLang === 'es' ? 'es' : 'en';
+          setLangState(autoLang);
+          // Don't save to DB yet, wait for user or onboarding completion if needed
+          // but we can save it as initial default
+          await setSetting('lang', autoLang);
+        }
       } catch {}
     })();
   }, []);

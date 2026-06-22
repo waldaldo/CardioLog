@@ -15,8 +15,10 @@ export const I18N: Record<Lang, Record<string, string>> = {
     bpm: 'lpm',
     weekAvg: '7 días',
     monthAvg: '30 días',
+    stdDev: 'Desv. estándar',
     recommendations: 'Recomendaciones',
     recommendationsForYou: 'Recomendaciones para ti',
+    variability: 'Variabilidad',
     viewAll: 'Ver todas',
     viewDetail: 'Ver detalle →',
     weekly: 'Semanal',
@@ -28,20 +30,31 @@ export const I18N: Record<Lang, Record<string, string>> = {
     evening: 'Noche',
     afternoon: 'Tarde',
     categories: 'Clasificación OMS',
+    cv: 'Coef. variación',
     reminders: 'Recordatorios',
     backup: 'Respaldo',
     settings: 'Ajustes',
+    about: 'Acerca de',
+    madeWith: 'Hecho con',
+    byWalo: 'por Walo',
+    buyMeACoffee: 'Apoyar el proyecto (Coffee)',
+    swipeToViewDetail: 'Desliza sobre el gráfico para ver detalles',
+    notes: 'Notas',
+    notesPlaceholder: '¿Algún síntoma o actividad?',
+    howToMeasure: '¿Cómo medir correctamente?',
+    tip1: 'Reposa sentado 5 min sin cruzar las piernas.',
+    tip2: 'Coloca el brazalete a la altura del corazón.',
+    tip3: 'No hables ni uses el celular durante la toma.',
 
-    // Home
     last14Days: 'Últimos 14 días',
 
-    // History
     trendZones: 'TENDENCIA · ZONAS OMS',
     showingLast: 'Mostrando los últimos 20 días',
     olderHidden: 'días anteriores no se muestran',
+    hiddenDaysMore: '+ {n} días más',
+    hiddenDaysMore_one: '+ 1 día más',
     noRecords: 'Aún no hay registros. Toca + en Inicio para comenzar.',
 
-    // Profile
     years: 'años',
     male: 'Masculino',
     female: 'Femenino',
@@ -55,15 +68,14 @@ export const I18N: Record<Lang, Record<string, string>> = {
     invalidDataMsg: 'Revisa que peso, talla y edad sean valores correctos.',
     recommendationsNav: 'Recomendaciones',
     remindersNav: 'Recordatorios',
-    backupNav: 'Respaldo en Google Drive',
+    backupNav: 'Respaldar o exportar',
     settingsNav: 'Ajustes',
+    historyNav: 'Historial completo',
 
-    // Record
     recordTitle: 'Registrar medición',
     saveError: 'Error',
     saveErrorMsg: 'No se pudo guardar la medición. Intenta de nuevo.',
 
-    // Onboarding
     stepOf: 'PASO',
     of: 'DE',
     onbName: '¿Cómo te llamas?',
@@ -79,8 +91,8 @@ export const I18N: Record<Lang, Record<string, string>> = {
     placeholderName: 'Tu nombre',
     onbError: 'Error',
     onbErrorMsg: 'No se pudo guardar el perfil. Intenta de nuevo.',
+    onbTheme: 'Elige tu tema preferido',
 
-    // Settings
     language: 'Idioma',
     spanish: 'Español',
     english: 'English',
@@ -90,16 +102,52 @@ export const I18N: Record<Lang, Record<string, string>> = {
     version: 'Versión',
     resetData: 'Borrar todos los datos',
     resetTitle: 'Borrar todos los datos',
-    resetMsg: '¿Estás seguro? Esto elimina tu perfil y mediciones.',
+    resetMsg: '¿Estás seguro? Esto elimina tu perfil y todas las mediciones. Esta acción no se puede deshacer.',
     resetError: 'Error',
     resetErrorMsg: 'No se pudo reiniciar la base de datos.',
 
-    // Reminders
+    setLockPin: 'Configurar PIN',
+    changeLockPin: 'Cambiar PIN',
+    removeLock: 'Quitar bloqueo',
+    lockEnabled: 'Bloqueo activado',
+    lockDisabled: 'Bloqueo desactivado',
+    lockPinSet: 'PIN configurado correctamente',
+    lockPinMismatch: 'Los PIN no coinciden',
+    enterPin: 'Ingresa tu PIN para desbloquear',
+    unlockBiometric: 'Usar huella',
+    unlockPrompt: 'Usa tu huella para desbloquear',
+    usePinInstead: 'Usar PIN',
+    delete: 'Borrar',
+    tooManyAttempts: 'Demasiados intentos',
+    tooManyAttemptsMsg: 'Intenta de nuevo en unos minutos.',
+    lockSetting: 'Bloqueo de acceso',
+    on: 'Activado',
+    off: 'Desactivado',
+    confirmPin: 'Confirmar PIN',
+    enterNewPin: 'Crea tu PIN de 4 dígitos',
+    confirmNewPin: 'Confirma tu PIN',
+    pinWillSecure: 'Este PIN protegerá tus datos',
+    pinAgain: 'Ingresa el mismo PIN nuevamente',
+
+    encryptBackup: 'Cifrar respaldo con contraseña',
+    backupPassword: 'Contraseña de respaldo',
+    backupPasswordPlaceholder: 'Ingresa una contraseña',
+    passwordRequiredTitle: 'Contraseña requerida',
+    passwordRequiredBody: 'Ingresa la contraseña para cifrar tu respaldo.',
+    enterPassword: 'Ingresa contraseña',
+    enterPasswordBody: 'El respaldo está cifrado. Ingresa la contraseña para descifrarlo.',
+    wrongPasswordTitle: 'Contraseña incorrecta',
+    wrongPasswordBody: 'La contraseña no es correcta. Intenta de nuevo.',
+
+    autoDeleteData: 'Eliminar datos antiguos',
+    autoDeleteMonths: 'Eliminar lecturas mayores a',
+    autoDeleteMonthsUnit: 'meses',
+    autoDeleteOff: 'Desactivado',
+
     morningMeasurement: 'Medición matinal',
     eveningMeasurement: 'Medición nocturna',
     addDefaultReminders: '+ Agregar recordatorios por defecto (8:00 y 21:00)',
 
-    // Backup
     backupTitle: 'Respaldo',
     exportData: 'Exportar datos',
     exportDesc: 'Genera un archivo JSON con tus mediciones y perfil. Puedes guardarlo en Google Drive, enviarlo por correo o compartirlo donde quieras.',
@@ -125,7 +173,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     notBackup: 'El archivo no es un respaldo de CardioLog.',
     cancelled: 'Selección cancelada',
 
-    // Readings detail
     lastNDays: 'Últimos',
     days: 'días',
     avgSys: 'Promedio SYS',
@@ -134,12 +181,10 @@ export const I18N: Record<Lang, Record<string, string>> = {
     measurements: 'Mediciones',
     noReadingsPeriod: 'No hay mediciones en los últimos',
 
-    // Recommendations
     avgSystolic: 'Sist. promedio',
     goal: 'Meta',
     searchGoogle: 'Buscar en Google →',
 
-    // PDF Report
     pdfReport: 'Informe PDF',
     pdfReportDesc: 'Genera un PDF con gráfico de tendencia y tabla de historial. Compártelo por correo, WhatsApp o donde quieras.',
     pdfExportBtn: 'Generar informe PDF',
@@ -172,8 +217,10 @@ export const I18N: Record<Lang, Record<string, string>> = {
     bpm: 'bpm',
     weekAvg: '7 days',
     monthAvg: '30 days',
+    stdDev: 'Std deviation',
     recommendations: 'Recommendations',
     recommendationsForYou: 'Recommendations for you',
+    variability: 'Variability',
     viewAll: 'View all',
     viewDetail: 'View detail →',
     weekly: 'Weekly',
@@ -185,15 +232,29 @@ export const I18N: Record<Lang, Record<string, string>> = {
     evening: 'Evening',
     afternoon: 'Afternoon',
     categories: 'WHO categories',
+    cv: 'Coef. variation',
     reminders: 'Reminders',
     backup: 'Backup',
     settings: 'Settings',
+    about: 'About',
+    madeWith: 'Made with',
+    byWalo: 'by Walo',
+    buyMeACoffee: 'Support the project (Coffee)',
+    swipeToViewDetail: 'Swipe over the chart to view details',
+    notes: 'Notes',
+    notesPlaceholder: 'Any symptoms or activities?',
+    howToMeasure: 'How to measure correctly?',
+    tip1: 'Rest seated for 5 min without crossing legs.',
+    tip2: 'Place the cuff at heart level.',
+    tip3: 'Do not talk or use your phone while measuring.',
 
     last14Days: 'Last 14 days',
 
     trendZones: 'TREND · WHO ZONES',
     showingLast: 'Showing last 20 days',
     olderHidden: 'older days not shown',
+    hiddenDaysMore: '+ {n} days more',
+    hiddenDaysMore_one: '+ 1 day more',
     noRecords: 'No records yet. Tap + on Home to start.',
 
     years: 'years',
@@ -209,8 +270,9 @@ export const I18N: Record<Lang, Record<string, string>> = {
     invalidDataMsg: 'Check that weight, height and age are correct.',
     recommendationsNav: 'Recommendations',
     remindersNav: 'Reminders',
-    backupNav: 'Google Drive backup',
+    backupNav: 'Backup or export',
     settingsNav: 'Settings',
+    historyNav: 'Full history',
 
     recordTitle: 'Log a reading',
     saveError: 'Error',
@@ -231,6 +293,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
     placeholderName: 'Your name',
     onbError: 'Error',
     onbErrorMsg: 'Could not save profile. Please try again.',
+    onbTheme: 'Choose your preferred theme',
 
     language: 'Language',
     spanish: 'Español',
@@ -241,9 +304,47 @@ export const I18N: Record<Lang, Record<string, string>> = {
     version: 'Version',
     resetData: 'Delete all data',
     resetTitle: 'Delete all data',
-    resetMsg: 'Are you sure? This will remove your profile and readings.',
+    resetMsg: 'Are you sure? This will remove your profile and all readings. This action cannot be undone.',
     resetError: 'Error',
     resetErrorMsg: 'Could not reset the database.',
+
+    setLockPin: 'Set PIN',
+    changeLockPin: 'Change PIN',
+    removeLock: 'Remove lock',
+    lockEnabled: 'Lock enabled',
+    lockDisabled: 'Lock disabled',
+    lockPinSet: 'PIN set successfully',
+    lockPinMismatch: 'PINs do not match',
+    enterPin: 'Enter PIN to unlock',
+    unlockBiometric: 'Use fingerprint',
+    unlockPrompt: 'Use your fingerprint to unlock',
+    usePinInstead: 'Use PIN',
+    delete: 'Delete',
+    tooManyAttempts: 'Too many attempts',
+    tooManyAttemptsMsg: 'Try again in a few minutes.',
+    lockSetting: 'Access lock',
+    on: 'On',
+    off: 'Off',
+    confirmPin: 'Confirm PIN',
+    enterNewPin: 'Create your 4-digit PIN',
+    confirmNewPin: 'Confirm your PIN',
+    pinWillSecure: 'This PIN will protect your data',
+    pinAgain: 'Enter the same PIN again',
+
+    encryptBackup: 'Encrypt backup with password',
+    backupPassword: 'Backup password',
+    backupPasswordPlaceholder: 'Enter a password',
+    passwordRequiredTitle: 'Password required',
+    passwordRequiredBody: 'Enter the password to encrypt your backup.',
+    enterPassword: 'Enter password',
+    enterPasswordBody: 'This backup is encrypted. Enter the password to decrypt it.',
+    wrongPasswordTitle: 'Wrong password',
+    wrongPasswordBody: 'The password is incorrect. Try again.',
+
+    autoDeleteData: 'Delete old data',
+    autoDeleteMonths: 'Delete readings older than',
+    autoDeleteMonthsUnit: 'months',
+    autoDeleteOff: 'Off',
 
     morningMeasurement: 'Morning measurement',
     eveningMeasurement: 'Evening measurement',
@@ -286,7 +387,6 @@ export const I18N: Record<Lang, Record<string, string>> = {
     goal: 'Goal',
     searchGoogle: 'Search Google →',
 
-    // PDF Report
     pdfReport: 'PDF Report',
     pdfReportDesc: 'Generate a PDF with a trend chart and history table. Share via email, WhatsApp, or anywhere.',
     pdfExportBtn: 'Generate PDF report',
@@ -317,4 +417,13 @@ export function avg(arr: any[], key: string): number {
 export function daysAgo<T extends { ts: string }>(arr: T[], days: number): T[] {
   const cutoff = Date.now() - days * 24 * 3600 * 1000;
   return arr.filter(r => new Date(r.ts).getTime() >= cutoff);
+}
+
+export function tp(lang: Lang, key: string, params: Record<string, string | number>): string {
+  const dict = I18N[lang] as Record<string, string>;
+  let template = dict[key] ?? key;
+  for (const [k, v] of Object.entries(params)) {
+    template = template.replace(`{${k}}`, String(v));
+  }
+  return template;
 }

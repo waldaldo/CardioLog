@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import CryptoJS from 'crypto-js';
 import {
   listReadings, getProfile, logBackup,
   saveProfile, clearAllReadings, insertReadingRaw,
@@ -17,28 +18,114 @@ export interface BackupPayload {
   exported_at: string;
   profile: Profile;
   readings: Reading[];
+  encrypted?: boolean;
 }
 
-// Genera el JSON, lo escribe en cacheDirectory (siempre existe) y abre el menú de compartir.
-// El usuario elige dónde guardarlo (Google Drive, correo, etc.) sin OAuth.
-export async function backupNow(): Promise<{ count: number }> {
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_KEY_SIZE_WORDS = 256 / 32; // 256-bit key, 8 words (32 bits each)
+
+interface EncryptedEnvelope {
+  v: 2;
+  kdf: 'pbkdf2-sha256-100k';
+  salt: string;
+  iv: string;
+  data: string;
+}
+
+function encryptPayload(plaintext: string, password: string): EncryptedEnvelope {
+  const salt = CryptoJS.lib.WordArray.random(16);
+  const iv = CryptoJS.lib.WordArray.random(16);
+  const key = CryptoJS.PBKDF2(password, salt, {
+    keySize: PBKDF2_KEY_SIZE_WORDS,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+    iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+  return {
+    v: 2,
+    kdf: 'pbkdf2-sha256-100k',
+    salt: salt.toString(CryptoJS.enc.Hex),
+    iv: iv.toString(CryptoJS.enc.Hex),
+    data: encrypted.toString(),
+  };
+}
+
+function decryptPayload(payload: EncryptedEnvelope, password: string): string {
+  let salt: CryptoJS.lib.WordArray;
+  let iv: CryptoJS.lib.WordArray;
+  try {
+    salt = CryptoJS.enc.Hex.parse(payload.salt);
+    iv = CryptoJS.enc.Hex.parse(payload.iv);
+  } catch {
+    throw new Error('wrongPassword');
+  }
+  const key = CryptoJS.PBKDF2(password, salt, {
+    keySize: PBKDF2_KEY_SIZE_WORDS,
+    iterations: PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  let plain: string;
+  try {
+    const decrypted = CryptoJS.AES.decrypt(payload.data, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+    plain = decrypted.toString(CryptoJS.enc.Utf8);
+  } catch {
+    throw new Error('wrongPassword');
+  }
+  // Con PBKDF2 + AES-CBC, una contraseña incorrecta producirá un texto
+  // descifrado con bytes basura. JSON.parse fallaría, pero también podría
+  // ocasionalmente "exito" por coincidencia. Validamos con un marcador
+  // de texto plano conocido para detectar ese caso.
+  if (!plain || !plain.startsWith('{"version":')) {
+    throw new Error('wrongPassword');
+  }
+  return plain;
+}
+
+function isEncryptedEnvelope(parsed: any): parsed is EncryptedEnvelope {
+  return (
+    parsed &&
+    parsed.v === 2 &&
+    parsed.kdf === 'pbkdf2-sha256-100k' &&
+    typeof parsed.salt === 'string' &&
+    typeof parsed.iv === 'string' &&
+    typeof parsed.data === 'string'
+  );
+}
+
+export async function backupNow(encrypted = false, password = ''): Promise<{ count: number }> {
   const profile = await getProfile();
   const readings = await listReadings(10000);
 
-  const payload: BackupPayload = {
+  const inner = JSON.stringify({
     version: 1,
     exported_at: new Date().toISOString(),
-    profile: profile!,
+    profile,
     readings,
-  };
+  });
 
-  const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  let finalJson: string;
+  if (encrypted) {
+    if (!password) {
+      throw new Error('passwordRequired');
+    }
+    finalJson = JSON.stringify(encryptPayload(inner, password));
+  } else {
+    finalJson = inner;
+  }
 
-  // cacheDirectory siempre existe — no necesita makeDirectoryAsync
+  const filename = `cardiolog-backup-${new Date().toISOString().slice(0, 10)}${encrypted ? '-encrypted' : ''}.json`;
+
   const cacheUri = FileSystem.cacheDirectory + filename;
-  await FileSystem.writeAsStringAsync(cacheUri, JSON.stringify(payload, null, 2));
+  await FileSystem.writeAsStringAsync(cacheUri, finalJson);
 
-  // Copia al documentDirectory para persistir en la lista de respaldos locales
   const docUri = FileSystem.documentDirectory + filename;
   await FileSystem.copyAsync({ from: cacheUri, to: docUri });
 
@@ -52,7 +139,8 @@ export async function backupNow(): Promise<{ count: number }> {
 }
 
 // Abre el selector de archivos, lee el JSON y devuelve el contenido validado.
-export async function pickAndReadBackup(): Promise<BackupPayload> {
+// Si está cifrado, el usuario debe proporcionar la contraseña.
+export async function pickAndReadBackup(password = ''): Promise<BackupPayload> {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'application/json',
     copyToCacheDirectory: true,
@@ -68,6 +156,25 @@ export async function pickAndReadBackup(): Promise<BackupPayload> {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error('invalidFile');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('invalidFile');
+  }
+
+  if (isEncryptedEnvelope(parsed)) {
+    if (!password) {
+      throw new Error('passwordRequired');
+    }
+    const plaintext = decryptPayload(parsed, password);
+    try {
+      parsed = JSON.parse(plaintext);
+    } catch {
+      throw new Error('wrongPassword');
+    }
+  } else if (parsed.encrypted) {
+    // Envelope heredado o formato desconocido: tratar como cifrado desconocido.
+    throw new Error('notBackup');
   }
 
   if (!parsed.profile || !Array.isArray(parsed.readings)) {

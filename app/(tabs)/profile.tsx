@@ -42,6 +42,7 @@ export default function Profile() {
   };
 
   const items = [
+    { label: t('historyNav'), nav: '/readings-detail?days=30' },
     { label: t('recommendationsNav'), nav: '/recommendations' },
     { label: t('remindersNav'), nav: '/reminders' },
     { label: t('backupNav'), nav: '/backup' },

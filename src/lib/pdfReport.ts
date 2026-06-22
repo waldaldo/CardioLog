@@ -3,9 +3,12 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Reading, Profile } from '../db/repositories';
 import { Lang, avg, daysAgo } from './i18n';
+import { stdDev, cv } from './stats';
 import { OMS_CATEGORIES, OMSCategoryId } from './oms';
 import { omsColors } from '@/theme/tokens';
 import { buildChartSvg } from './chartSvg';
+
+const HIGH_SYS_VARIABILITY_THRESHOLD = 12;
 
 export type PdfPeriod = 'all' | '30d' | '90d';
 
@@ -43,7 +46,9 @@ export function buildReportHtml(
       date: 'Fecha', time: 'Hora', category: 'Clasificación',
       systolic: 'Sistólica', diastolic: 'Diastólica', pulse: 'Pulso',
       measurements: 'Mediciones', avgSys: 'Promedio SYS', avgDia: 'Promedio DIA',
-      avgPulse: 'Pulso med.', years: 'años', male: 'Masculino', female: 'Femenino',
+      avgPulse: 'Pulso med.', stdSys: 'σ Sistólica', stdDia: 'σ Diastólica',
+      cvSys: 'CV Sistólica', cvDia: 'CV Diastólica',
+      years: 'años', male: 'Masculino', female: 'Femenino',
       trendZones: 'TENDENCIA · ZONAS OMS', noReadings: 'Sin mediciones en el período',
       capped: 'Mostrando las últimas 200 de',
     },
@@ -54,7 +59,9 @@ export function buildReportHtml(
       date: 'Date', time: 'Time', category: 'Classification',
       systolic: 'Systolic', diastolic: 'Diastolic', pulse: 'Pulse',
       measurements: 'Readings', avgSys: 'Avg SYS', avgDia: 'Avg DIA',
-      avgPulse: 'Avg pulse', years: 'years', male: 'Male', female: 'Female',
+      avgPulse: 'Avg pulse', stdSys: 'σ Systolic', stdDia: 'σ Diastolic',
+      cvSys: 'CV Systolic', cvDia: 'CV Diastolic',
+      years: 'years', male: 'Male', female: 'Female',
       trendZones: 'TREND · WHO ZONES', noReadings: 'No readings in period',
       capped: 'Showing last 200 of',
     },
@@ -71,6 +78,13 @@ export function buildReportHtml(
   const avgPulse = avg(filtered, 'pulse');
   const count    = filtered.length;
   const dominant = dominantCategory(filtered);
+
+  const hasData = filtered.length >= 2;
+  const stdSys = hasData ? Math.round(stdDev(filtered, 'sys')) : null;
+  const stdDia = hasData ? Math.round(stdDev(filtered, 'dia')) : null;
+  const cvSysVal = hasData ? cv(filtered, 'sys') : null;
+  const cvDiaVal = hasData ? cv(filtered, 'dia') : null;
+  const highVariability = stdSys !== null && stdSys >= HIGH_SYS_VARIABILITY_THRESHOLD;
 
   const chartSvg = buildChartSvg(filtered, 560, 220);
   const chartImg = chartSvg
@@ -107,6 +121,7 @@ export function buildReportHtml(
   .sub{font-size:13px;color:#64748b;margin-top:4px}
   .patient{text-align:right;font-size:12px;color:#64748b;line-height:1.7}
   .stats{display:flex;gap:12px;margin-bottom:20px}
+  .stats+.stats{margin-top:-8px}
   .card{flex:1;border-radius:10px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center}
   .val{font-size:26px;font-weight:800}
   .lbl{font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;margin-top:3px}
@@ -140,6 +155,12 @@ ${count === 0 ? `<p style="color:#64748b;text-align:center;padding:32px 0">${l.n
   <div class="card"><div class="val" style="color:#6d28d9">${avgPulse}</div><div class="lbl">${l.avgPulse}</div></div>
   <div class="card"><div class="val" style="color:#047857">${count}</div><div class="lbl">${l.measurements}</div></div>
 </div>
+${hasData ? `<div class="stats">
+  <div class="card"><div class="val" style="color:${highVariability ? '#fb923c' : '#0f172a'}">${stdSys}</div><div class="lbl">${l.stdSys}</div></div>
+  <div class="card"><div class="val">${stdDia}</div><div class="lbl">${l.stdDia}</div></div>
+  <div class="card"><div class="val">${cvSysVal!.toFixed(1)}%</div><div class="lbl">${l.cvSys}</div></div>
+  <div class="card"><div class="val">${cvDiaVal!.toFixed(1)}%</div><div class="lbl">${l.cvDia}</div></div>
+</div>` : ''}
 
 ${dominant ? `<div class="dom" style="background:${omsColors.light[dominant.id]}18;border:1px solid ${omsColors.light[dominant.id]}44">
   <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${omsColors.light[dominant.id]}"></span>

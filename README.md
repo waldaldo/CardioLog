@@ -1,6 +1,6 @@
 # CardioLog
 
-Aplicación móvil para registro y seguimiento de presión arterial, construida con React Native y Expo.
+Aplicación móvil para registro y seguimiento de presión arterial, construida con React Native y Expo. Disponible para **Android** e **iOS**.
 
 **Diseñada con dos principios no negociables: simplicidad y privacidad.**
 Todos los datos se almacenan exclusivamente en el dispositivo. La app no tiene servidores propios, no requiere cuenta, no recopila datos de uso, no envía analíticas y no accede a internet en ningún momento. Lo que registras es tuyo y solo tuyo.
@@ -12,9 +12,12 @@ Todos los datos se almacenan exclusivamente en el dispositivo. La app no tiene s
 - Promedios de 7 y 30 días con acceso al detalle de cada rango
 - Recomendaciones de estilo de vida personalizadas según presión e IMC
 - Recordatorios locales programables (sin internet)
+- Pantalla de bloqueo con PIN para proteger el acceso a la app
+- Onboarding guiado de 5 pasos para nueva configuración
 - Exportar respaldo en JSON o PDF e importar desde archivo — el usuario elige dónde guardarlo
 - Perfil editable con cálculo de IMC automático
 - Tema oscuro y claro con cambio en tiempo real
+- Soporte completo para iOS y Android
 
 ## Privacidad
 
@@ -38,6 +41,7 @@ El código es abierto y auditable.
 - **expo-sqlite** — base de datos local SQLite
 - **expo-notifications** — recordatorios locales
 - **expo-document-picker** + **expo-sharing** — exportar e importar respaldos sin OAuth
+- **expo-local-authentication** — pantalla de bloqueo con PIN
 - **react-native-reanimated** — animaciones de transición sin parpadeo
 - **react-native-svg** — gráfico de tendencia de presión arterial
 
@@ -124,6 +128,28 @@ List of devices attached
 R5CR80XXXX  device
 ```
 
+### Generar build para iOS (macOS)
+
+Requisitos previos:
+
+- macOS con Xcode instalado
+- CocoaPods (`pod install` dentro de `ios/`)
+
+1. Instalar dependencias:
+
+```bash
+npm install
+cd ios && pod install && cd ..
+```
+
+2. Compilar:
+
+```bash
+npx expo run:ios
+```
+
+> En un Mac con Xcode configurado, esto abrirá el simulador y terminará de compilar el proyecto nativo automáticamente.
+
 ## Estructura del proyecto
 
 ```
@@ -139,6 +165,8 @@ app/                          # Pantallas (Expo Router — cada archivo = una ru
 ├── reminders.tsx             # Gestión de recordatorios
 ├── backup.tsx                # Respaldo en Google Drive
 ├── settings.tsx              # Idioma, tema, borrar datos
+├── lock.tsx                  # Pantalla de bloqueo con PIN
+├── set-pin.tsx               # Configuración del PIN
 └── _layout.tsx               # Raíz: inicialización de SQLite + árbol de navegación
 
 src/
@@ -159,9 +187,11 @@ src/
 │   ├── AreaChart.tsx         # Gráfico SVG de tendencia con zonas OMS
 │   ├── ScreenSlide.tsx       # Animación de entrada para pantallas de stack
 │   ├── TabFade.tsx           # Animación de entrada para pestañas
-│   └── Logo.tsx              # Logo SVG de la app
-└── theme/
-    └── tokens.ts             # Colores, tipografía y espaciado base
+│   └── ScreenHeader.tsx      # Header adaptativo con logo
+├── theme/
+│   └── tokens.ts             # Colores, tipografía y espaciado base
+└── types/
+    └── expo-local-authentication.d.ts  # Tipos para autenticación local
 ```
 
 ## Respaldo y restauración

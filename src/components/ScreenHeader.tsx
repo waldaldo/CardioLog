@@ -5,7 +5,7 @@ import { View, Text } from 'react-native';
 import { BackButton } from './BackButton';
 import { useTheme } from '@/context/ThemeContext';
 
-export function ScreenHeader({ title, right }: { title: string; right?: React.ReactNode }) {
+export function ScreenHeader({ title, right, showBack = true }: { title: string; right?: React.ReactNode; showBack?: boolean }) {
   const { colors } = useTheme();
   return (
     <View style={{
