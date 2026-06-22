@@ -9,6 +9,14 @@ import { omsColors } from '@/theme/tokens';
 import { buildChartSvg } from './chartSvg';
 
 const HIGH_SYS_VARIABILITY_THRESHOLD = 12;
+const PRINT_TIMEOUT_MS = 25_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number, code: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(code)), ms)),
+  ]);
+}
 
 export type PdfPeriod = 'all' | '30d' | '90d';
 
@@ -211,7 +219,14 @@ export async function exportPdfReport(
     : [...readings];
 
   const html = buildReportHtml(readings, profile, lang, period);
-  const { uri } = await Print.printToFileAsync({ html, base64: false });
+  // printToFileAsync puede colgarse en Android cuando no hay un servicio de
+  // impresión configurado. Limitamos a 25s para que el usuario no quede pegado
+  // en "Preparando..." sin feedback.
+  const { uri } = await withTimeout(
+    Print.printToFileAsync({ html, base64: false }),
+    PRINT_TIMEOUT_MS,
+    'PRINT_TIMEOUT',
+  );
 
   const sharingTitle = lang === 'es' ? 'Informe CardioLog' : 'CardioLog Report';
   await Sharing.shareAsync(uri, {

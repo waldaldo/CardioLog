@@ -56,7 +56,11 @@ export default function Backup() {
       const r = await exportPdfReport(readings, profile, lang, pdfPeriod);
       Alert.alert(t('pdfDone'), `${t('pdfDoneMsg')} ${r.count} ${t('backupDoneSuffix')}`);
     } catch (e: any) {
-      if (e.message !== 'cancelled') Alert.alert(t('saveError'), e.message);
+      if (e.message === 'PRINT_TIMEOUT') {
+        Alert.alert(t('pdfTimeoutTitle'), t('pdfTimeoutBody'));
+      } else if (e.message !== 'cancelled') {
+        Alert.alert(t('saveError'), e.message);
+      }
     } finally {
       setPdfBusy(false);
     }

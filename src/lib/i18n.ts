@@ -200,6 +200,8 @@ export const I18N: Record<Lang, Record<string, string>> = {
     date: 'Fecha',
     time: 'Hora',
     category: 'Clasificación',
+    pdfTimeoutTitle: 'No se pudo generar el PDF',
+    pdfTimeoutBody: 'El dispositivo no respondió a tiempo. Verificá que haya un servicio de impresión configurado en Ajustes del sistema e intentá de nuevo.',
   },
   en: {
     appName: 'CardioLog',
@@ -402,6 +404,8 @@ export const I18N: Record<Lang, Record<string, string>> = {
     date: 'Date',
     time: 'Time',
     category: 'Classification',
+    pdfTimeoutTitle: 'Could not generate the PDF',
+    pdfTimeoutBody: 'The device did not respond in time. Make sure a print service is configured in System Settings and try again.',
   },
 };
 
